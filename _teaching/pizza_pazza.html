@@ -1,0 +1,1513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Pizza Pazza – Dynamic Demand Simulation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#38bdf8; --grid:#374151; --success:#10b981; --warning:#f59e0b; --surface:#0b1220; --surface-alt:#1f2937; --border-muted:#374151; --border-strong:#1f2937; --pill-border:#334155; }
+  body.light-mode{
+    --bg:#f1f5f9;
+    --panel:#ffffff;
+    --ink:#0f172a;
+    --muted:#475569;
+    --accent:#38bdf8;
+    --grid:#cbd5f5;
+    --success:#16a34a;
+    --warning:#d97706;
+    --surface:#ffffff;
+    --surface-alt:#e2e8f0;
+    --border-muted:#cbd5f5;
+    --border-strong:#cbd5f5;
+    --pill-border:#cbd5f5;
+  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+  h1{font-size:1.5rem;margin:0 0 12px}
+  .header-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .design-credit{margin:0 0 12px;font-size:.8rem;color:var(--muted);font-weight:400}
+  .theme-toggle{background:var(--panel);color:var(--ink);border:1px solid var(--border-muted);border-radius:999px;padding:8px 16px;font-weight:600;cursor:pointer;transition:.2s}
+  .theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+  h2{font-size:1.2rem;margin:0 0 8px;color:var(--muted)}
+  
+  /* Enhanced Controls */
+  .controls-section{background:var(--panel);border-radius:12px;padding:16px;margin:16px 0;display:grid;gap:20px}
+  .control-row{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+  .control-group{display:flex;flex-direction:column;gap:6px;min-width:200px}
+  .control-group label{font-size:14px;color:var(--muted);font-weight:600}
+  .control-group input[type=range]{width:180px}
+  .control-group input[type=number]{width:80px;padding:4px 8px;border:1px solid var(--border-muted);background:var(--surface);color:var(--ink);border-radius:6px}
+  
+  .preset-buttons{display:flex;gap:8px}
+  .preset-buttons button{background:var(--success);color:#002b36;border:0;padding:6px 12px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px}
+  .preset-buttons button.warning{background:var(--warning)}
+  .preset-buttons button.danger{background:#ef4444}
+  
+  .sim-controls{display:flex;gap:12px;align-items:center}
+  .sim-controls button{background:var(--accent);color:#002b36;border:0;padding:8px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+  .sim-controls button[disabled]{opacity:.6;cursor:not-allowed}
+  
+  .toggle-buttons{display:flex;gap:8px;}
+  .toggle-buttons button{background:var(--surface-alt);color:var(--ink);border:1px solid var(--border-muted);padding:6px 12px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;transition:.3s}
+  .toggle-buttons button.active{background:var(--accent);color:#002b36;border-color:var(--accent)}
+  .toggle-buttons button:hover{border-color:var(--accent)}
+  
+  .display-section{background:var(--panel);border-radius:12px;padding:16px;margin:16px 0;display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+  .display-section h2{margin:0}
+  
+  .status-info{display:flex;gap:20px;align-items:center;padding-top:12px;border-top:1px solid var(--border-muted)}
+  .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--pill-border);background:var(--surface);color:var(--ink);font-size:16px}
+  .muted{color:var(--muted)}
+  
+  .resources-bar{display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;margin:16px 0;background:var(--panel);border-radius:12px;padding:12px}
+  @media (max-width: 900px){ .resources-bar{grid-template-columns:repeat(2, 1fr);} }
+  @media (max-width: 600px){ .resources-bar{grid-template-columns:1fr;} }
+  .actor-horizontal{display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;padding:8px;min-height:80px}
+  .actor-horizontal > div:last-child{display:flex;flex-direction:column;justify-content:space-between;height:100%;min-height:64px}
+  .charts-section{display:flex;flex-direction:column;gap:16px}
+  .avatar{font-size:30px;text-align:center;filter:drop-shadow(0 0 6px rgba(56,189,248,.2))}
+  .status{font-size:18px;color:var(--muted);min-height:44px;display:flex;align-items:center;line-height:1.3}
+  .pizza-count{font-size:18px;color:var(--accent);font-weight:600;min-height:24px;display:flex;align-items:center}
+  .busy{outline:2px solid var(--accent);box-shadow:0 0 20px rgba(56,189,248,.35);transition:.2s}
+  .gantt{background:var(--panel);border-radius:12px;padding:12px;position:relative}
+  .gantt .msg{padding:12px;color:var(--muted)}
+  .gantt h3{font-size:1.1rem;margin:0 0 12px;color:var(--ink)}
+  .inventory-chart,
+  .throughput-chart{background:var(--panel);border-radius:12px;padding:12px;margin-top:16px}
+  .inventory-chart h3,
+  .throughput-chart h3{font-size:1.1rem;margin:0 0 12px;color:var(--ink)}
+  svg{width:100%;height:260px;background:var(--surface);border:1px solid var(--border-strong);border-radius:10px}
+  #svg{height:300px}
+  #inventorySvg{height:360px}
+  #throughputSvg{height:360px}
+  .grid line{stroke:var(--grid);stroke-width:1}
+  .axis text{fill:var(--muted);font-size:18px}
+  .axis-label{fill:var(--muted);font-size:18px}
+  .now{stroke:var(--accent);stroke-width:2;stroke-dasharray:4 4}
+  
+  /* Process Flow Styles */
+  .process-flow-section{background:var(--panel);border-radius:12px;padding:20px;margin:16px 0}
+  .process-title{font-size:1.2rem;margin:0 0 16px;text-align:center;color:var(--ink)}
+  
+  .idle-resources{display:flex;gap:12px;align-items:center;justify-content:center;padding:12px;background:var(--surface);border:2px dashed var(--border-muted);border-radius:10px;margin-bottom:20px;flex-wrap:wrap}
+  .idle-label{color:var(--muted);font-size:14px;font-weight:600}
+  .resource-badge{padding:6px 12px;border-radius:20px;font-size:14px;font-weight:600;transition:.3s}
+  .resource-badge.idle{background:var(--surface-alt);color:var(--muted);opacity:.5}
+  .resource-badge.active{background:var(--accent);color:#002b36;opacity:1;box-shadow:0 0 12px rgba(56,189,248,.4)}
+  
+  .process-flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:12px 0}
+  .activity-card{background:var(--surface);border:2px solid var(--border-strong);border-radius:10px;min-width:120px;transition:.3s;position:relative}
+  .activity-card.active{border-color:var(--accent);border-width:3px;box-shadow:0 0 20px rgba(56,189,248,.3);transform:scale(1.05)}
+  .activity-card.dual-resource{border:2px solid transparent;background:var(--surface);box-shadow:0 0 15px rgba(249,115,22,.35)}
+  .activity-card.dual-resource.active{border-color:var(--accent);border-width:3px;box-shadow:0 0 22px rgba(249,115,22,.5);transform:scale(1.05)}
+  .activity-card.dual-resource .activity-header{
+    background:radial-gradient(circle, rgba(251,146,60,.95) 35%, rgba(236,72,153,.95) 100%);
+    color:#1f2937;
+  }
+  .activity-card.dual-resource .activity-header .activity-resource{color:#1f2937}
+  
+  .activity-header{padding:8px 10px;border-radius:8px 8px 0 0;display:flex;flex-direction:column;gap:4px;font-size:13px}
+  .activity-header.green{background:#10b981;color:#002b36}
+  .activity-header.orange{background:#f59e0b;color:#002b36}
+  .activity-header.blue{background:#38bdf8;color:#002b36}
+  .activity-header.pink{background:#ec4899;color:#fff}
+  
+  .activity-name{font-weight:700;font-size:14px}
+  .activity-resource{font-size:11px;line-height:1.3;opacity:.85}
+  .activity-time{padding:6px 10px;text-align:center;color:var(--muted);font-size:13px;font-weight:600}
+  .activity-count{padding:6px 10px;text-align:center;color:var(--accent);font-size:16px;font-weight:700;border-top:1px solid var(--border-strong);display:none}
+  
+  .flow-arrow{font-size:24px;color:var(--grid);font-weight:bold}
+  .buffer{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:120px}
+  .buffer-triangle{width:100px;height:80px;background:var(--surface-alt);border:2px solid var(--border-muted);clip-path:polygon(50% 0,100% 100%,0 100%);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:var(--ink);box-shadow:0 6px 12px rgba(15,23,42,.25)}
+  .buffer-value{display:flex;align-items:center;gap:4px;font-weight:700;font-size:18px}
+  .buffer-label{font-size:12px;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.05em}
+  
+  @media (max-width: 1100px){
+    .process-flow{gap:6px}
+    .activity-card{min-width:100px}
+    .flow-arrow{font-size:20px}
+  }
+  @media (max-width: 900px){
+    .process-flow{flex-direction:column;gap:12px}
+    .flow-arrow{transform:rotate(90deg)}
+  }
+  
+  .chart-container{transition:all .3s ease;overflow:hidden}
+  .chart-container.hidden{display:none}
+  
+  /* ...existing code... */
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header-bar">
+    <h1>🍕 Pizza Pazza – Process Visualization</h1>
+    <button id="themeToggle" class="theme-toggle" aria-pressed="false">☀️ Light Mode</button>
+  </div>
+  <p class="design-credit">Designed by Daniela Hurtado-Lange, based on Pizza Pazza case by Jan A. Van Mieghem. Operations Department, Kellogg School of Management. </p>
+
+  <!-- Display Section -->
+  <div class="display-section">
+    <h2>Display</h2>
+    <div class="toggle-buttons">
+      <button id="toggleGantt" class="active" onclick="toggleChart('gantt')">📊 Gantt Chart</button>
+      <button id="toggleThroughput" class="active" onclick="toggleChart('throughput')">🚀 Throughput Chart</button>
+      <button id="toggleInventory" class="active" onclick="toggleChart('inventory')">📈 Inventory Chart</button>
+    </div>
+  </div>
+
+  <!-- Enhanced Controls -->
+  <div class="controls-section">
+    <h2>Demand Controls</h2>
+    <div class="control-row">
+      <div class="control-group">
+        <label>📋 Orders per Hour</label>
+        <input id="demandRate" type="range" min="1" max="12" step="0.01" value="3" />
+        <span id="demandRateVal" class="pill">3.00 orders/hr (20.0 min/order)</span>
+      </div>
+      <div class="control-group">
+        <label>🎯 Total Orders to Simulate</label>
+        <input id="totalOrders" type="number" min="3" max="50" value="25" />
+      </div>
+    </div>
+    
+      <div class="control-row">
+        <div class="sim-controls">
+          <button id="generateBtn">🔄 Reset</button>
+          <button id="play">▶︎ Play</button>
+          <button id="showResults">Show Results</button>
+        </div>
+      <div class="control-group">
+        <label>⚡ Playback Speed</label>
+        <input id="speed" type="range" min="1" max="10" step="0.1" value="1" />
+        <span id="speedVal" class="pill">1×</span>
+      </div>
+      <div class="control-group">
+        <label>⏱️ Minutes per Second</label>
+        <input id="mpf" type="number" value="1" min="0.1" max="5" step="0.1" />
+      </div>
+    </div>
+    
+    <div class="status-info">
+      <span class="muted">Time:</span><span id="tLabel" class="pill">t = 0.0 min</span>
+      <span class="muted">Orders Completed:</span><span id="completedOrders" class="pill">0 / 0</span>
+      <span class="muted">Throughput:</span><span id="throughput" class="pill">-- orders/hr</span>
+    </div>
+  </div>
+
+  <!-- Process Flow Section -->
+  <div class="process-flow-section">
+    <h2 class="process-title">🍕 Pizza Pazza Process Flow</h2>
+    
+    <div class="idle-resources">
+      <span class="idle-label">⚡ Busy Resources</span>
+      <span id="idle-jean" class="resource-badge idle">👨‍🍳 Jean</span>
+      <span id="idle-jacqueline" class="resource-badge idle">👩‍🍳 Jacqueline</span>
+      <span id="idle-oven" class="resource-badge idle">🔥 Oven</span>
+      <span id="idle-cooling" class="resource-badge idle">🧊 Cooling Rack</span>
+    </div>
+    
+    <div class="process-flow">
+      <div class="activity-card" id="activity-sauce">
+        <div class="activity-header green">
+          <span class="activity-name">Sauce Prep</span>
+          <span class="activity-resource">👨‍🍳 Jean</span>
+        </div>
+        <div class="activity-time">2 min</div>
+        <div class="activity-count" id="count-sauce">🍕 0</div>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+      
+      <div class="activity-card" id="activity-dough">
+        <div class="activity-header green">
+          <span class="activity-name">Dough Prep</span>
+          <span class="activity-resource">👨‍🍳 Jean</span>
+        </div>
+        <div class="activity-time">3 min</div>
+        <div class="activity-count" id="count-dough">🍕 0</div>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+      
+      <div class="activity-card" id="activity-assembly">
+        <div class="activity-header green">
+          <span class="activity-name">Assembly</span>
+          <span class="activity-resource">👨‍🍳 Jean</span>
+        </div>
+        <div class="activity-time">2 min</div>
+        <div class="activity-count" id="count-assembly">🍕 0</div>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+
+      <div class="buffer" aria-label="Queue before oven">
+        <div class="buffer-triangle">
+          <span class="buffer-value">🍕 <span id="buffer-pre-count">0</span></span>
+        </div>
+        <span class="buffer-label">Waiting for Oven</span>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+      
+      <div class="activity-card dual-resource" id="activity-load">
+        <div class="activity-header orange">
+          <span class="activity-name">Load Oven</span>
+          <span class="activity-resource">👩‍🍳 Jacqueline<br>🔥 Oven</span>
+        </div>
+        <div class="activity-time">1 min</div>
+        <div class="activity-count" id="count-load">🍕 0</div>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+      
+      <div class="activity-card" id="activity-baking">
+        <div class="activity-header orange">
+          <span class="activity-name">Baking</span>
+          <span class="activity-resource">🔥 Oven</span>
+        </div>
+        <div class="activity-time">15 min</div>
+        <div class="activity-count" id="count-baking">🍕 0</div>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+
+      <div class="buffer" aria-label="Queue after oven">
+        <div class="buffer-triangle">
+          <span class="buffer-value">🍕 <span id="buffer-post-count">0</span></span>
+        </div>
+        <span class="buffer-label">Cooling Queue</span>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+      
+      <div class="activity-card" id="activity-cooling">
+        <div class="activity-header blue">
+          <span class="activity-name">Cooling</span>
+          <span class="activity-resource">🧊 Cooling Rack</span>
+        </div>
+        <div class="activity-time">3 min</div>
+        <div class="activity-count" id="count-cooling">🍕 0</div>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+      
+      <div class="activity-card" id="activity-unload">
+        <div class="activity-header pink">
+          <span class="activity-name">Unload & Pack</span>
+          <span class="activity-resource">👩‍🍳 Jacqueline</span>
+        </div>
+        <div class="activity-time">2 min</div>
+        <div class="activity-count" id="count-unload">🍕 0</div>
+      </div>
+      
+      <div class="flow-arrow">→</div>
+      
+      <div class="activity-card" id="activity-billing">
+        <div class="activity-header pink">
+          <span class="activity-name">Billing</span>
+          <span class="activity-resource">👩‍🍳 Jacqueline</span>
+        </div>
+        <div class="activity-time">2 min</div>
+        <div class="activity-count" id="count-billing">🍕 0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <!-- Gantt -->
+    <div class="gantt chart-container" id="ganttContainer">
+      <h3>🔄 Process Timeline (Gantt Chart)</h3>
+      <svg id="svg" viewBox="0 0 1100 300" preserveAspectRatio="none"></svg>
+      <div id="ganttMsg" class="msg">Click "Reset" to start simulation</div>
+    </div>
+
+    <!-- Throughput Chart -->
+    <div class="throughput-chart chart-container" id="throughputContainer">
+      <h3>🚀 Throughput Over Time</h3>
+      <svg id="throughputSvg" viewBox="0 0 1100 360" preserveAspectRatio="none"></svg>
+    </div>
+
+    <!-- Buildup Inventory Chart -->
+    <div class="inventory-chart chart-container" id="inventoryContainer">
+      <h3>📊 Pizza Inventory Over Time (Buildup Diagram)</h3>
+      <svg id="inventorySvg" viewBox="0 0 1100 340" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================== CONFIG & HELPERS ======================== */
+const L_MARGIN = 150, R_MARGIN = 1030;
+const GANTT_TOP = 12;
+const GANTT_BOTTOM = 248;
+const INVENTORY_MAX = 40;
+const INVENTORY_STEP = 4;
+const INVENTORY_TOP = 30;
+const INVENTORY_BOTTOM = 300;
+const INVENTORY_SPAN = INVENTORY_BOTTOM - INVENTORY_TOP;
+const THROUGHPUT_MAX = 4;
+const THROUGHPUT_STEP = 0.5;
+const THROUGHPUT_TOP = 30;
+const THROUGHPUT_BOTTOM = 300;
+const ROLLING_AVERAGE_CAP = 3.75;
+const laneValueToY = value => GANTT_BOTTOM - (value/INVENTORY_MAX)*(GANTT_BOTTOM - GANTT_TOP);
+const inventoryValueToY = (value, max = INVENTORY_MAX) => INVENTORY_BOTTOM - (Math.min(Math.max(value,0),max)/Math.max(1,max))*INVENTORY_SPAN;
+const throughputValueToY = value => THROUGHPUT_BOTTOM - (Math.min(Math.max(value,0),THROUGHPUT_MAX)/THROUGHPUT_MAX)*(THROUGHPUT_BOTTOM - THROUGHPUT_TOP);
+const RESOURCE_LANES = [
+  {name:"Jean", value:32},
+  {name:"Oven", value:24},
+  {name:"Cooling Rack", value:16},
+  {name:"Jacqueline", value:8}
+];
+const LANES = RESOURCE_LANES.map(l => ({name:l.name, y:laneValueToY(l.value)}));
+const GRID_LANES = [...LANES, {name:"", y:laneValueToY(0), hidden:true}];
+const COLORS=['#60a5fa','#34d399','#f472b6','#fbbf24','#c084fc','#22d3ee','#fca5a5','#a3e635'];
+const colorForOrder=o=>COLORS[(o-1)%COLORS.length];
+const getStart=e=>(e.start_min??e.start??0)*1;
+const getFinish=e=>(e.finish_min??e.finish??0)*1;
+const laneY=r=>{
+  const n=(r||'').startsWith?.('Oven')?'Oven':(r||'Jean');
+  return (LANES.find(l=>l.name===n)||LANES[0]).y;
+};
+
+function qs(id){return document.getElementById(id);}
+
+function getArrivalRate(){
+  const simRate = window.pizzaSimulation?.ordersPerHour;
+  if(Number.isFinite(simRate) && simRate > 0) return simRate;
+  const sliderValue = parseFloat(qs('demandRate')?.value);
+  return Number.isFinite(sliderValue) && sliderValue > 0 ? sliderValue : 0;
+}
+
+function getRollingAverageRate(){
+  const arrivalRate = getArrivalRate();
+  return Math.min(ROLLING_AVERAGE_CAP, arrivalRate || 0);
+}
+
+function getRollingWindowMinutes(){
+  // Rolling window spans 1/R hours where R = min(3.75, arrival rate)
+  const rollingRate = getRollingAverageRate();
+  if(rollingRate <= 0) return 0;
+  return 60 / rollingRate;
+}
+
+/* ======================== SIMULATION ENGINE ======================== */
+class PizzaSimulation {
+  constructor() {
+    this.events = [];
+    this.ordersPerHour = 3; // default arrival rate
+    this.demandRate = 60 / this.ordersPerHour; // minutes between orders
+    this.totalOrders = 12;
+    
+    // Process times (minutes)
+    this.processTimes = {
+      saucePrep: 2,
+      doughPrep: 3, 
+      assembly: 2,
+      baking: 15,
+      cooling: 3,
+      loading: 1,
+      unloading: 2,
+      billing: 2
+    };
+  }
+  
+  generateSchedule() {
+    console.log(`Generating schedule: ${this.totalOrders} orders, ${this.ordersPerHour.toFixed(2)} orders/hr (${this.demandRate.toFixed(1)} min intervals)`);
+    this.events = [];
+    
+    // Track resource availability
+    const resources = {
+      jean: 0,
+      oven: 0,
+      coolingRack: 0, 
+      jacquelineLoad: 0,    // For loading oven tasks
+      jacquelineFinal: 0    // For unload/pack/bill tasks
+    };
+    
+    // Generate orders with arrival times
+    const orders = [];
+    for(let i = 1; i <= this.totalOrders; i++) {
+      orders.push({
+        id: i,
+        arrivalTime: (i-1) * this.demandRate // Orders arrive at regular intervals
+      });
+    }
+    
+    orders.forEach(order => {
+      const orderId = order.id;
+      const arrivalTime = order.arrivalTime;
+      
+      // Jean's tasks (can start immediately when Jean is available after arrival)
+      const jeanStartTime = Math.max(arrivalTime, resources.jean);
+      
+      // Sauce prep
+      this.addEvent(orderId, "Sauce prep", "Jean", jeanStartTime, jeanStartTime + this.processTimes.saucePrep);
+      
+      // Dough prep  
+      const doughStart = jeanStartTime + this.processTimes.saucePrep;
+      this.addEvent(orderId, "Dough prep", "Jean", doughStart, doughStart + this.processTimes.doughPrep);
+      
+      // Assembly
+      const assemblyStart = doughStart + this.processTimes.doughPrep;
+      const assemblyEnd = assemblyStart + this.processTimes.assembly;
+      this.addEvent(orderId, "Assemble (2 pizzas)", "Jean", assemblyStart, assemblyEnd);
+      
+      // Update Jean's availability
+      resources.jean = assemblyEnd;
+      
+      // Oven loading - can start when assembly is done AND oven is available AND jacqueline is available for loading
+      const ovenLoadStart = Math.max(assemblyEnd, resources.oven, resources.jacquelineLoad);
+      const ovenLoadEnd = ovenLoadStart + this.processTimes.loading;
+      
+      this.addEvent(orderId, "Load oven & set timer", "Oven #1", ovenLoadStart, ovenLoadEnd);
+      this.addEvent(orderId, "Load oven & set timer", "Jacqueline", ovenLoadStart, ovenLoadEnd);
+      
+      // Jacqueline is free for loading the next order right after this load finishes
+      resources.jacquelineLoad = ovenLoadEnd;
+      
+      // Baking
+      const bakeStart = ovenLoadEnd;
+      const bakeEnd = bakeStart + this.processTimes.baking;
+      this.addEvent(orderId, "Bake", "Oven #1", bakeStart, bakeEnd);
+      
+      // Update oven availability (oven is free when baking finishes)
+      resources.oven = bakeEnd;
+      
+      // Cooling - starts right after baking
+      const coolStart = bakeEnd;
+      const coolEnd = coolStart + this.processTimes.cooling;
+      this.addEvent(orderId, "Cool", "Cooling Rack", coolStart, coolEnd);
+      
+      // Jacqueline's final tasks - can start when cooling is done AND Jacqueline is available for final tasks
+      const jacqFinalStart = Math.max(coolEnd, resources.jacquelineFinal);
+      
+      // Unloading & packing
+      const unloadEnd = jacqFinalStart + this.processTimes.unloading;
+      this.addEvent(orderId, "Unload & pack (2 pizzas)", "Jacqueline", jacqFinalStart, unloadEnd);
+      
+      // Billing
+      const billingEnd = unloadEnd + this.processTimes.billing;
+      this.addEvent(orderId, "Bill", "Jacqueline", unloadEnd, billingEnd);
+      
+      // Update Jacqueline's availability for final tasks
+      resources.jacquelineFinal = billingEnd;
+    });
+    
+    console.log(`Generated ${this.events.length} events`);
+    return this.events;
+  }
+  
+  addEvent(order, step, resource, start, finish) {
+    this.events.push({
+      order: order,
+      kind: "TC",
+      step: step,
+      resource: resource,
+      start_min: start,
+      finish_min: finish
+    });
+  }
+  
+  setDemandRate(ratePerHour) {
+    const safeRate = Math.max(ratePerHour || 0, 0.1);
+    this.ordersPerHour = safeRate;
+    this.demandRate = 60 / safeRate;
+  }
+  
+  setTotalOrders(total) {
+    this.totalOrders = total;
+  }
+}
+
+/* ======================== PRESET CONFIGURATIONS ======================== */
+function setDemandPreset(preset) {
+  const demandRateEl = qs('demandRate');
+  const totalOrdersEl = qs('totalOrders');
+  
+  switch(preset) {
+    case 'low':
+      demandRateEl.value = (60 / 25).toFixed(1); // ~2.4 orders/hr
+      totalOrdersEl.value = 8;
+      break;
+    case 'medium':  
+      demandRateEl.value = 3;
+      totalOrdersEl.value = 12;
+      break;
+    case 'high':
+      demandRateEl.value = 6;
+      totalOrdersEl.value = 20;
+      break;
+  }
+  
+  updateDemandDisplay();
+}
+
+function updateDemandDisplay() {
+  const ordersPerHour = parseFloat(qs('demandRate').value);
+  if(!Number.isFinite(ordersPerHour) || ordersPerHour <= 0){
+    qs('demandRateVal').textContent = '-- orders/hr';
+    return;
+  }
+  const minutesBetween = 60 / ordersPerHour;
+  qs('demandRateVal').textContent = `${ordersPerHour.toFixed(2)} orders/hr (${minutesBetween.toFixed(1)} min/order)`;
+}
+
+/* ======================== DRAWING FUNCTIONS ======================== */
+function makeAxes(svg,tMax){
+  const ns=svg.namespaceURI; const gG=document.createElementNS(ns,'g'); gG.setAttribute('class','grid');
+  const gA=document.createElementNS(ns,'g'); gA.setAttribute('class','axis');
+  const step=Math.max(5,Math.ceil(tMax/12/5)*5);
+  for(let m=0;m<=tMax;m+=step){
+    const x=L_MARGIN+(R_MARGIN-L_MARGIN)*(m/Math.max(1,tMax));
+    const l=document.createElementNS(ns,'line');
+    l.setAttribute('x1',x); l.setAttribute('y1',GANTT_TOP); l.setAttribute('x2',x); l.setAttribute('y2',GANTT_BOTTOM);
+    gG.appendChild(l);
+    const t=document.createElementNS(ns,'text'); t.setAttribute('x',x-6); t.setAttribute('y',GANTT_BOTTOM-2);
+    t.textContent=m; gA.appendChild(t);
+  }
+  GRID_LANES.forEach(l=>{
+    if(l.name){
+      const ty=document.createElementNS(ns,'text');
+      ty.setAttribute('x',12);
+      ty.setAttribute('y',l.y+4);
+      ty.textContent=l.name;
+      gA.appendChild(ty);
+    }
+    if(!l.hidden){
+      const h=document.createElementNS(ns,'line');
+      h.setAttribute('x1',L_MARGIN-5); h.setAttribute('x2',R_MARGIN);
+      h.setAttribute('y1',l.y); h.setAttribute('y2',l.y);
+      gG.appendChild(h);
+    }
+  });
+  svg.appendChild(gG); svg.appendChild(gA);
+  const xt=document.createElementNS(ns,'text'); xt.setAttribute('x',R_MARGIN-40); xt.setAttribute('y',GANTT_BOTTOM+30);
+  xt.setAttribute('class','axis-label'); xt.textContent='Minutes'; svg.appendChild(xt);
+}
+
+function addBar(svg,y,s,f,tMax,color){
+  const ns=svg.namespaceURI;
+  const x1=L_MARGIN+(R_MARGIN-L_MARGIN)*(s/tMax), x2=L_MARGIN+(R_MARGIN-L_MARGIN)*(f/tMax);
+  const r=document.createElementNS(ns,'rect');
+  r.setAttribute('x',x1); r.setAttribute('y',y-10); r.setAttribute('width',Math.max(0.01,x2-x1)); r.setAttribute('height',20);
+  r.setAttribute('fill',color); r.setAttribute('opacity','0.95');
+  svg.appendChild(r); return r;
+}
+
+function clipWidth(rect,s,f,t,tMax){
+  const x1=L_MARGIN+(R_MARGIN-L_MARGIN)*(s/tMax), x2=L_MARGIN+(R_MARGIN-L_MARGIN)*(Math.min(f,t)/tMax);
+  rect.setAttribute('width',Math.max(0,x2-x1));
+}
+
+/* ======================== INVENTORY CHART FUNCTIONS ======================== */
+let inventorySvg, inventoryLines = {}, inventoryNowLine, inventoryData = {}, inventoryChartMax = INVENTORY_MAX;
+let throughputSvg, throughputLine, throughputWindowLine, throughputNowLine, throughputData = [], throughputWindowData = [], throughputCompletions = [];
+let throughputNeedsInit = true;
+const INVENTORY_COLORS = {
+  Jean:'#10b981',
+  Oven:'#f59e0b',
+  'Cooling Rack':'#38bdf8',
+  Jacqueline:'#ec4899'
+};
+const THROUGHPUT_COLOR = '#f97316';
+const THROUGHPUT_WINDOW_COLOR = '#a78bfa';
+
+function makeInventoryAxes(svg, tMax, maxInventory){
+  const ns = svg.namespaceURI;
+  const gG = document.createElementNS(ns,'g'); gG.setAttribute('class','grid');
+  const gA = document.createElementNS(ns,'g'); gA.setAttribute('class','axis');
+  
+  // Time axis (same as Gantt)
+  const step = Math.max(5,Math.ceil(tMax/12/5)*5);
+  for(let m=0; m<=tMax; m+=step){
+    const x = L_MARGIN+(R_MARGIN-L_MARGIN)*(m/Math.max(1,tMax));
+    const l = document.createElementNS(ns,'line');
+    l.setAttribute('x1',x); l.setAttribute('y1',INVENTORY_TOP); 
+    l.setAttribute('x2',x); l.setAttribute('y2',INVENTORY_BOTTOM);
+    gG.appendChild(l);
+    const t = document.createElementNS(ns,'text'); 
+    t.setAttribute('x',x-6); t.setAttribute('y',INVENTORY_BOTTOM + 18);
+    t.textContent = m; gA.appendChild(t);
+  }
+  
+  // Inventory axis (Y-axis)
+  for(let i=0; i<=maxInventory; i+=INVENTORY_STEP){
+    const y = inventoryValueToY(i, maxInventory);
+    const h = document.createElementNS(ns,'line');
+    h.setAttribute('x1',L_MARGIN-5); h.setAttribute('x2',R_MARGIN);
+    h.setAttribute('y1',y); h.setAttribute('y2',y);
+    gG.appendChild(h);
+    const t = document.createElementNS(ns,'text');
+    t.setAttribute('x',12); t.setAttribute('y',y+4);
+    t.textContent = i + ' 🍕'; gA.appendChild(t);
+  }
+  if(maxInventory % INVENTORY_STEP !== 0){
+    const y = inventoryValueToY(maxInventory, maxInventory);
+    const h = document.createElementNS(ns,'line');
+    h.setAttribute('x1',L_MARGIN-5); h.setAttribute('x2',R_MARGIN);
+    h.setAttribute('y1',y); h.setAttribute('y2',y);
+    gG.appendChild(h);
+    const t = document.createElementNS(ns,'text');
+    t.setAttribute('x',12); t.setAttribute('y',y+4);
+    t.textContent = maxInventory + ' 🍕'; gA.appendChild(t);
+  }
+  svg.appendChild(gG); svg.appendChild(gA);
+  
+  // Labels
+  const xlabel = document.createElementNS(ns,'text');
+  xlabel.setAttribute('x',R_MARGIN-40); xlabel.setAttribute('y',INVENTORY_BOTTOM + 38);
+  xlabel.setAttribute('class','axis-label');
+  xlabel.textContent = 'Minutes'; svg.appendChild(xlabel);
+  
+  const ylabel = document.createElementNS(ns,'text');
+  ylabel.setAttribute('x',50); ylabel.setAttribute('y',INVENTORY_TOP - 12);
+  ylabel.setAttribute('class','axis-label');
+  ylabel.textContent = 'Pizza Inventory'; svg.appendChild(ylabel);
+}
+
+function calculateInventoryOverTime(events, tMax){
+  const pizzasPerOrder = 2;
+  const timePoints = [];
+  const inventoryData = {Jean:[], Oven:[], 'Cooling Rack':[], Jacqueline:[]};
+  
+  // Create time points for all event starts/ends
+  events.forEach(e => {
+    timePoints.push(getStart(e), getFinish(e));
+  });
+  timePoints.push(0, tMax);
+  const uniqueTimes = [...new Set(timePoints)].sort((a,b) => a-b);
+  
+  uniqueTimes.forEach(time => {
+    // Calculate inventory at each time point
+    const getOrdersAtStage = (stageName) => {
+      const orders = new Set();
+      events.forEach(e => {
+        if (e.step.includes(stageName) && getStart(e) <= time) {
+          orders.add(e.order);
+        }
+      });
+      return Array.from(orders);
+    };
+    
+    const getOrdersCompletedStage = (stageName) => {
+      const orders = new Set();
+      events.forEach(e => {
+        if (e.step.includes(stageName) && getFinish(e) <= time) {
+          orders.add(e.order);
+        }
+      });
+      return Array.from(orders);
+    };
+    
+    const ordersStartedPrep = getOrdersAtStage('Sauce');
+    const ordersFinishedAssembly = getOrdersCompletedStage('Assemble');
+    const ordersFinishedBaking = getOrdersCompletedStage('Bake');
+    const ordersFinishedCooling = getOrdersCompletedStage('Cool');
+    const ordersFinishedBilling = getOrdersCompletedStage('Bill');
+    
+    const jeanInventory = ordersStartedPrep.filter(order => !ordersFinishedAssembly.includes(order)).length * pizzasPerOrder;
+    const ovenInventory = ordersFinishedAssembly.filter(order => !ordersFinishedBaking.includes(order)).length * pizzasPerOrder;
+    const coolInventory = ordersFinishedBaking.filter(order => !ordersFinishedCooling.includes(order)).length * pizzasPerOrder;
+    const jacqInventory = ordersFinishedCooling.filter(order => !ordersFinishedBilling.includes(order)).length * pizzasPerOrder;
+    
+    inventoryData.Jean.push({time, inventory: jeanInventory});
+    inventoryData.Oven.push({time, inventory: ovenInventory});
+    inventoryData['Cooling Rack'].push({time, inventory: coolInventory});
+    inventoryData.Jacqueline.push({time, inventory: jacqInventory});
+  });
+  
+  return inventoryData;
+}
+
+function initInventoryChart(events, tMax){
+  inventorySvg = qs('inventorySvg');
+  while(inventorySvg.firstChild) inventorySvg.removeChild(inventorySvg.firstChild);
+  
+  if(!events || !events.length) return;
+  
+  const ns = inventorySvg.namespaceURI;
+  
+  // Calculate inventory data points for animation
+  inventoryData = calculateInventoryOverTime(events, tMax);
+  const maxInventoryValue = ['Jean','Oven','Cooling Rack','Jacqueline']
+    .map(resource => (inventoryData[resource] || []).reduce((max,val)=>Math.max(max, val.inventory || 0),0))
+    .reduce((max,val)=>Math.max(max,val),0);
+  const dynamicMax = Math.max(4, Math.ceil(Math.max(0, maxInventoryValue) / 4) * 4 + 4);
+  inventoryChartMax = dynamicMax;
+  
+  // Create axes for inventory chart
+  makeInventoryAxes(inventorySvg, tMax, dynamicMax);
+  
+  // Initialize empty paths for each resource that will be drawn progressively
+  ['Jean', 'Oven', 'Cooling Rack', 'Jacqueline'].forEach(resource => {
+    createInventoryPath(inventorySvg, resource);
+  });
+  
+  // Add now line for inventory chart
+  inventoryNowLine = document.createElementNS(ns,'line');
+  inventoryNowLine.setAttribute('class','now'); 
+  inventoryNowLine.setAttribute('y1',String(INVENTORY_TOP)); 
+  inventoryNowLine.setAttribute('y2',String(INVENTORY_BOTTOM));
+  inventorySvg.appendChild(inventoryNowLine);
+  updateInventoryNowLine(0, tMax);
+}
+
+function createInventoryPath(svg, resource){
+  const ns = svg.namespaceURI;
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('id', `inventory-${resource}`);
+  path.setAttribute('stroke', INVENTORY_COLORS[resource] || '#60a5fa');
+  path.setAttribute('stroke-width', '3');
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke-linecap', 'round');
+  svg.appendChild(path);
+  
+  // Add legend
+  const legend = document.createElementNS(ns, 'text');
+  const legendY = 50 + Object.keys(INVENTORY_COLORS).indexOf(resource) * 20;
+  legend.setAttribute('x', R_MARGIN - 120);
+  legend.setAttribute('y', legendY);
+  legend.setAttribute('fill', INVENTORY_COLORS[resource] || '#60a5fa');
+  legend.setAttribute('font-size', '14');
+  legend.setAttribute('font-weight', '600');
+  legend.textContent = resource;
+  svg.appendChild(legend);
+}
+
+function updateInventoryLines(currentTime, tMax){
+  if(!inventoryData || !inventorySvg || !tMax) return;
+  
+  const maxInventory = inventoryChartMax || INVENTORY_MAX;
+  
+  ['Jean', 'Oven', 'Cooling Rack', 'Jacqueline'].forEach(resource => {
+    const path = inventorySvg.querySelector(`#inventory-${resource}`);
+    if(!path) return;
+    
+    const data = inventoryData[resource];
+    if(!data || !data.length) return;
+    
+    // Find data points up to current time
+    const visiblePoints = data.filter(point => point.time <= currentTime);
+    if(!visiblePoints.length) {
+      path.setAttribute('d', '');
+      return;
+    }
+    
+    // Build path data for points up to current time
+    let pathData = '';
+    visiblePoints.forEach((point, i) => {
+      const x = L_MARGIN + (R_MARGIN-L_MARGIN) * (point.time / tMax);
+      const y = inventoryValueToY(point.inventory, maxInventory);
+      
+      if(i === 0) {
+        pathData += `M ${x} ${y}`;
+      } else {
+        // Create step function (horizontal then vertical)
+        const prevY = inventoryValueToY(visiblePoints[i-1].inventory, maxInventory);
+        pathData += ` L ${x} ${prevY} L ${x} ${y}`;
+      }
+    });
+    
+    // If there are more points ahead, draw horizontal line to current time
+    const nextPoint = data.find(point => point.time > currentTime);
+    if(nextPoint && visiblePoints.length > 0) {
+      const lastPoint = visiblePoints[visiblePoints.length - 1];
+      const currentX = L_MARGIN + (R_MARGIN-L_MARGIN) * (currentTime / tMax);
+      const lastY = inventoryValueToY(lastPoint.inventory, maxInventory);
+      pathData += ` L ${currentX} ${lastY}`;
+    }
+    
+    path.setAttribute('d', pathData);
+  });
+}
+
+function updateInventoryNowLine(tt, tMax){
+  if(!inventoryNowLine || !tMax) return;
+  const x = L_MARGIN+(R_MARGIN-L_MARGIN)*(tt/Math.max(1,tMax));
+  inventoryNowLine.setAttribute('x1',x); 
+  inventoryNowLine.setAttribute('x2',x);
+}
+
+/* ======================== THROUGHPUT CHART FUNCTIONS ======================== */
+function makeThroughputAxes(svg, tMax){
+  const ns = svg.namespaceURI;
+  const gG = document.createElementNS(ns,'g'); gG.setAttribute('class','grid');
+  const gA = document.createElementNS(ns,'g'); gA.setAttribute('class','axis');
+  const stepMinutes = Math.max(5, Math.ceil(tMax/12/5)*5);
+  for(let minutes=0; minutes<=tMax; minutes+=stepMinutes){
+    const x = L_MARGIN+(R_MARGIN-L_MARGIN)*(minutes/Math.max(1,tMax));
+    const l = document.createElementNS(ns,'line');
+    l.setAttribute('x1',x); l.setAttribute('y1',THROUGHPUT_TOP); 
+    l.setAttribute('x2',x); l.setAttribute('y2',THROUGHPUT_BOTTOM);
+    gG.appendChild(l);
+    const t = document.createElementNS(ns,'text'); 
+    t.setAttribute('x',x-6); t.setAttribute('y',THROUGHPUT_BOTTOM + 18);
+    t.textContent = minutes; 
+    gA.appendChild(t);
+  }
+  for(let v=0; v<=THROUGHPUT_MAX; v+=THROUGHPUT_STEP){
+    const y = throughputValueToY(v);
+    const l = document.createElementNS(ns,'line');
+    l.setAttribute('x1',L_MARGIN-5); l.setAttribute('x2',R_MARGIN);
+    l.setAttribute('y1',y); l.setAttribute('y2',y);
+    gG.appendChild(l);
+    const t = document.createElementNS(ns,'text');
+    t.setAttribute('x',12); t.setAttribute('y',y+4);
+    const label = Number.isInteger(v) ? v : v.toFixed(1);
+    t.textContent = `${label} orders/hr`;
+    gA.appendChild(t);
+  }
+  svg.appendChild(gG); svg.appendChild(gA);
+  const xlabel = document.createElementNS(ns,'text');
+  xlabel.setAttribute('x',R_MARGIN-40); xlabel.setAttribute('y',THROUGHPUT_BOTTOM + 38);
+  xlabel.setAttribute('class','axis-label');
+  xlabel.textContent = 'Minutes'; svg.appendChild(xlabel);
+  
+  const ylabel = document.createElementNS(ns,'text');
+  ylabel.setAttribute('x',50); ylabel.setAttribute('y',THROUGHPUT_TOP - 12);
+  ylabel.setAttribute('class','axis-label');
+  ylabel.textContent = 'Orders / hr'; svg.appendChild(ylabel);
+}
+
+function addThroughputLegend(svg){
+  const ns = svg.namespaceURI;
+  const legend = document.createElementNS(ns,'g');
+  const entries = [
+    {color: THROUGHPUT_COLOR, label: 'Average throughput over [0, t]'},
+    {color: THROUGHPUT_WINDOW_COLOR, label: 'Rolling window average'}
+  ];
+  const legendX = L_MARGIN + 80;
+  const legendY = THROUGHPUT_TOP - 8;
+  const entrySpacing = 320;
+  entries.forEach((entry, idx) => {
+    const group = document.createElementNS(ns,'g');
+    group.setAttribute('transform', `translate(${legendX + idx * entrySpacing}, ${legendY})`);
+    const line = document.createElementNS(ns,'line');
+    line.setAttribute('x1', 0); line.setAttribute('x2', 30);
+    line.setAttribute('y1', 0); line.setAttribute('y2', 0);
+    line.setAttribute('stroke', entry.color);
+    line.setAttribute('stroke-width', '4');
+    line.setAttribute('stroke-linecap', 'round');
+    group.appendChild(line);
+    const text = document.createElementNS(ns,'text');
+    text.setAttribute('x', 36); text.setAttribute('y', 6);
+    text.setAttribute('class', 'axis-label');
+    text.textContent = entry.label;
+    group.appendChild(text);
+    legend.appendChild(group);
+  });
+  svg.appendChild(legend);
+}
+
+function calculateThroughputOverTime(events, tMax){
+  const completionTimes = (events || [])
+    .filter(e => e.step.includes('Bill'))
+    .map(e => getFinish(e))
+    .sort((a,b) => a-b);
+  
+  const sampleTimes = new Set([0]);
+  const ceilMax = Math.ceil(Math.max(0, tMax));
+  for(let m = 1; m <= ceilMax; m++){
+    sampleTimes.add(m);
+  }
+  completionTimes.forEach(time => sampleTimes.add(time));
+  if(tMax > 0) sampleTimes.add(tMax);
+  const sortedTimes = [...sampleTimes].sort((a,b) => a-b);
+  
+  const points = [];
+  let completed = 0;
+  let idx = 0;
+  sortedTimes.forEach(time => {
+    while(idx < completionTimes.length && completionTimes[idx] <= time){
+      completed++;
+      idx++;
+    }
+    const throughput = time > 0 ? Math.min((completed / time) * 60, THROUGHPUT_MAX) : 0;
+    points.push({time, throughput});
+  });
+  
+  return {points, completions: completionTimes};
+}
+
+function calculateWindowThroughputData(completionTimes, tMax){
+  if(!tMax) return [];
+  const rollingRate = getRollingAverageRate();
+  if(rollingRate <= 0) return [];
+  const windowMinutes = 60 / rollingRate;
+  const rollingCap = Math.min(THROUGHPUT_MAX, rollingRate);
+  const uniqueTimes = new Set([0, Math.max(0,tMax)]);
+  const denseLimit = Math.ceil(tMax);
+  for(let m = 1; m <= denseLimit; m++){
+    uniqueTimes.add(m);
+  }
+  completionTimes.forEach(time => {
+    uniqueTimes.add(time);
+    uniqueTimes.add(Math.max(0, time - windowMinutes));
+  });
+  const sortedTimes = [...uniqueTimes].sort((a,b) => a-b);
+  const windowHours = windowMinutes / 60;
+  const data = [];
+  let endIdx = 0;
+  let startIdx = 0;
+  sortedTimes.forEach(time => {
+    while(endIdx < completionTimes.length && completionTimes[endIdx] <= time) endIdx++;
+    const windowStartTime = Math.max(0, time - windowMinutes);
+    while(startIdx < completionTimes.length && completionTimes[startIdx] <= windowStartTime) startIdx++;
+    const windowCount = Math.max(0, endIdx - startIdx);
+    const denomHours = Math.min(windowHours, time / 60);
+    const throughputRaw = denomHours > 0 ? windowCount / denomHours : 0;
+    const throughput = Math.min(throughputRaw, rollingCap);
+    data.push({time, throughput});
+  });
+  return data;
+}
+
+function getCompletedOrdersByTime(time){
+  if(!throughputCompletions || !throughputCompletions.length) return 0;
+  let count = 0;
+  while(count < throughputCompletions.length && throughputCompletions[count] <= time){
+    count++;
+  }
+  return count;
+}
+
+function initThroughputChart(events, tMax, currentTime = 0){
+  throughputSvg = qs('throughputSvg');
+  if(!throughputSvg) return;
+  while(throughputSvg.firstChild) throughputSvg.removeChild(throughputSvg.firstChild);
+  throughputLine = null;
+  throughputWindowLine = null;
+  throughputNowLine = null;
+  throughputData = [];
+  throughputWindowData = [];
+  
+  if(!events || !events.length) return;
+  
+  const ns = throughputSvg.namespaceURI;
+  makeThroughputAxes(throughputSvg, tMax);
+  addThroughputLegend(throughputSvg);
+  const throughputResult = calculateThroughputOverTime(events, tMax);
+  throughputData = throughputResult.points;
+  throughputCompletions = throughputResult.completions || [];
+  throughputWindowData = calculateWindowThroughputData(throughputCompletions, tMax);
+  
+  throughputLine = document.createElementNS(ns,'path');
+  throughputLine.setAttribute('stroke', THROUGHPUT_COLOR);
+  throughputLine.setAttribute('stroke-width','3');
+  throughputLine.setAttribute('fill','none');
+  throughputLine.setAttribute('stroke-linecap','round');
+  throughputSvg.appendChild(throughputLine);
+
+  throughputWindowLine = document.createElementNS(ns,'path');
+  throughputWindowLine.setAttribute('stroke', THROUGHPUT_WINDOW_COLOR);
+  throughputWindowLine.setAttribute('stroke-width','3');
+  throughputWindowLine.setAttribute('fill','none');
+  throughputWindowLine.setAttribute('stroke-linecap','round');
+  throughputWindowLine.setAttribute('stroke-dasharray','6 4');
+  throughputSvg.appendChild(throughputWindowLine);
+  
+  throughputNowLine = document.createElementNS(ns,'line');
+  throughputNowLine.setAttribute('class','now'); 
+  throughputNowLine.setAttribute('y1',String(THROUGHPUT_TOP)); 
+  throughputNowLine.setAttribute('y2',String(THROUGHPUT_BOTTOM));
+  throughputSvg.appendChild(throughputNowLine);
+  
+  updateThroughputLine(currentTime, tMax);
+  updateWindowThroughputLine(currentTime, tMax);
+  updateThroughputNowLine(currentTime, tMax);
+  throughputNeedsInit = false;
+}
+
+function updateThroughputLine(currentTime, tMax){
+  if(!throughputLine || !throughputData || !throughputData.length || !tMax) return;
+  const visiblePoints = throughputData.filter(point => point.time <= currentTime);
+  if(!visiblePoints.length){
+    throughputLine.setAttribute('d','');
+    return;
+  }
+  let pathData = '';
+  visiblePoints.forEach((point, idx) => {
+    const x = L_MARGIN+(R_MARGIN-L_MARGIN)*(point.time/Math.max(1,tMax));
+    const y = throughputValueToY(point.throughput);
+    pathData += idx===0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
+  });
+  const lastPoint = visiblePoints[visiblePoints.length-1];
+  if(currentTime > lastPoint.time){
+    const completed = getCompletedOrdersByTime(currentTime);
+    const currentThroughput = currentTime > 0 ? (completed / currentTime) * 60 : 0;
+    const currentX = L_MARGIN+(R_MARGIN-L_MARGIN)*(currentTime/Math.max(1,tMax));
+    const currentY = throughputValueToY(Math.min(currentThroughput, THROUGHPUT_MAX));
+    pathData += ` L ${currentX} ${currentY}`;
+  }
+  throughputLine.setAttribute('d', pathData);
+}
+
+function updateThroughputNowLine(currentTime, tMax){
+  if(!throughputNowLine || !tMax) return;
+  const x = L_MARGIN+(R_MARGIN-L_MARGIN)*(currentTime/Math.max(1,tMax));
+  throughputNowLine.setAttribute('x1',x); 
+  throughputNowLine.setAttribute('x2',x);
+}
+
+function getWindowThroughputAt(time){
+  if(!time || time <= 0) return 0;
+  const rollingRate = getRollingAverageRate();
+  if(rollingRate <= 0) return 0;
+  const rollingCap = Math.min(THROUGHPUT_MAX, rollingRate);
+  const windowMinutes = 60 / rollingRate;
+  const startTime = Math.max(0, time - windowMinutes);
+  const endCount = getCompletedOrdersByTime(time);
+  const startCount = getCompletedOrdersByTime(startTime);
+  const windowCount = Math.max(0, endCount - startCount);
+  const windowHours = windowMinutes / 60;
+  const denomHours = Math.min(windowHours, time / 60);
+  if(denomHours <= 0) return 0;
+  return Math.min(windowCount / denomHours, rollingCap);
+}
+
+function updateWindowThroughputLine(currentTime, tMax){
+  if(!throughputWindowLine || !throughputWindowData || !throughputWindowData.length || !tMax) return;
+  const visiblePoints = throughputWindowData.filter(point => point.time <= currentTime);
+  if(!visiblePoints.length){
+    throughputWindowLine.setAttribute('d','');
+    return;
+  }
+  let pathData = '';
+  visiblePoints.forEach((point, idx) => {
+    const x = L_MARGIN+(R_MARGIN-L_MARGIN)*(point.time/Math.max(1,tMax));
+    const y = throughputValueToY(point.throughput);
+    pathData += idx===0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
+  });
+  const lastPoint = visiblePoints[visiblePoints.length-1];
+  if(currentTime > lastPoint.time){
+    const currentThroughput = getWindowThroughputAt(currentTime);
+    const currentX = L_MARGIN+(R_MARGIN-L_MARGIN)*(currentTime/Math.max(1,tMax));
+    const currentY = throughputValueToY(Math.min(currentThroughput, THROUGHPUT_MAX));
+    pathData += ` L ${currentX} ${currentY}`;
+  }
+  throughputWindowLine.setAttribute('d', pathData);
+}
+
+/* ======================== ACTOR PANEL FUNCTIONS ======================== */
+function setActor(id,busy,txt){
+  const box=qs(id);
+  if(!box) return;
+  box.classList.toggle('busy',!!busy);
+  const lab=qs(id.replace('actor-','')+'Task');
+  if(lab) lab.textContent = busy ? txt : 'Idle';
+}
+
+function setPizzaCount(id, count){
+  const elem = qs(id);
+  if(!elem) return;
+  elem.textContent = count > 0 ? `🍕 ${count} pizza${count > 1 ? 's' : ''}` : '🍕 0 pizzas';
+}
+
+function updateActors(tt, events){
+  if(!events || !events.length) return;
+  
+  const active=res=>events.find(e=>{
+    const r=(e.resource||''); const rr=r.startsWith?.('Oven')?'Oven':r;
+    return rr===res && getStart(e)<=tt && tt<getFinish(e);
+  });
+  
+  // Calculate total pizza inventory at each stage
+  const pizzasPerOrder = 2;
+  
+  const getOrdersAtStage = (stageName) => {
+    const orders = new Set();
+    events.forEach(e => {
+      if (e.step.includes(stageName) && getStart(e) <= tt) {
+        orders.add(e.order);
+      }
+    });
+    return Array.from(orders);
+  };
+  
+  const getOrdersCompletedStage = (stageName) => {
+    const orders = new Set();
+    events.forEach(e => {
+      if (e.step.includes(stageName) && getFinish(e) <= tt) {
+        orders.add(e.order);
+      }
+    });
+    return Array.from(orders);
+  };
+  
+  // Jean: orders that have started prep but not finished assembly
+  const ordersStartedPrep = getOrdersAtStage('Sauce');
+  const ordersFinishedAssembly = getOrdersCompletedStage('Assemble');
+  const jeanPizzas = ordersStartedPrep.filter(order => !ordersFinishedAssembly.includes(order)).length * pizzasPerOrder;
+  
+  // Oven: orders that finished assembly but not finished baking
+  const ordersFinishedBaking = getOrdersCompletedStage('Bake');
+  const ovenPizzas = ordersFinishedAssembly.filter(order => !ordersFinishedBaking.includes(order)).length * pizzasPerOrder;
+  
+  // Cooling rack: orders that finished baking but not finished cooling
+  const ordersFinishedCooling = getOrdersCompletedStage('Cool');
+  const coolPizzas = ordersFinishedBaking.filter(order => !ordersFinishedCooling.includes(order)).length * pizzasPerOrder;
+  
+  // Jacqueline: orders that finished cooling but not finished billing
+  const ordersFinishedBilling = getOrdersCompletedStage('Bill');
+  const jacqPizzas = ordersFinishedCooling.filter(order => !ordersFinishedBilling.includes(order)).length * pizzasPerOrder;
+  
+  const j=active('Jean'), o=active('Oven'), c=active('Cooling Rack'), q=active('Jacqueline');
+  setActor('actor-jean', !!j, j?`${j.step} (Order ${j.order})`:'' );
+  setActor('actor-oven', !!o, o?`${o.step} (Order ${o.order})`:'' );
+  setActor('actor-cool', !!c, c?`${c.step} (Order ${c.order})`:'' );
+  setActor('actor-jacq', !!q, q?`${q.step} (Order ${q.order})`:'' );
+  
+  // Update pizza counts
+  setPizzaCount('jeanPizzas', jeanPizzas);
+  setPizzaCount('ovenPizzas', ovenPizzas);
+  setPizzaCount('coolPizzas', coolPizzas);
+  setPizzaCount('jacqPizzas', jacqPizzas);
+  
+  const ordersStartedLoading = getOrdersAtStage('Load');
+  const ordersStartedCoolingStage = getOrdersAtStage('Cool');
+  const bufferToOvenOrders = ordersFinishedAssembly.filter(order => !ordersStartedLoading.includes(order));
+  const bufferFromOvenOrders = ordersFinishedBaking.filter(order => !ordersStartedCoolingStage.includes(order));
+  const bufferPreCount = bufferToOvenOrders.length * pizzasPerOrder;
+  const bufferPostCount = bufferFromOvenOrders.length * pizzasPerOrder;
+  const bufferPreEl = qs('buffer-pre-count');
+  const bufferPostEl = qs('buffer-post-count');
+  if(bufferPreEl) bufferPreEl.textContent = bufferPreCount;
+  if(bufferPostEl) bufferPostEl.textContent = bufferPostCount;
+  
+  // Update process flow activities
+  const activityMap = {
+    'Sauce prep': 'sauce',
+    'Dough prep': 'dough',
+    'Assemble': 'assembly',
+    'Load oven': 'load',
+    'Bake': 'baking',
+    'Cool': 'cooling',
+    'Unload': 'unload',
+    'Bill': 'billing'
+  };
+  
+  // Reset all activities
+  Object.values(activityMap).forEach(id => {
+    const card = qs(`activity-${id}`);
+    if(card) card.classList.remove('active');
+  });
+  
+  // Set active resources
+  const activeResources = new Set();
+  
+  // Check each activity type and update counts
+  events.forEach(e => {
+    const isActive = getStart(e) <= tt && tt < getFinish(e);
+    
+    if(isActive) {
+      // Mark resource as active
+      if(e.resource === 'Jean') activeResources.add('jean');
+      if(e.resource === 'Jacqueline') activeResources.add('jacqueline');
+      if(e.resource && e.resource.includes('Oven')) activeResources.add('oven');
+      if(e.resource === 'Cooling Rack') activeResources.add('cooling');
+    }
+    
+    // Highlight active activity cards
+    for(let [stepName, activityId] of Object.entries(activityMap)) {
+      if(e.step.includes(stepName) && isActive) {
+        const card = qs(`activity-${activityId}`);
+        if(card) card.classList.add('active');
+      }
+    }
+  });
+  
+  // Update idle resource badges
+  ['jean', 'jacqueline', 'oven', 'cooling'].forEach(resource => {
+    const badge = qs(`idle-${resource}`);
+    if(badge) {
+      badge.classList.toggle('idle', !activeResources.has(resource));
+      badge.classList.toggle('active', activeResources.has(resource));
+    }
+  });
+  
+  // Update activity counts (pizzas at each stage)
+  const getCountAtStage = (stageName) => {
+    const orders = new Set();
+    events.forEach(e => {
+      if(e.step.includes(stageName) && getStart(e) <= tt && tt < getFinish(e)) {
+        orders.add(e.order);
+      }
+    });
+    return orders.size * 2; // 2 pizzas per order
+  };
+  
+  qs('count-sauce').textContent = `🍕 ${getCountAtStage('Sauce')}`;
+  qs('count-dough').textContent = `🍕 ${getCountAtStage('Dough')}`;
+  qs('count-assembly').textContent = `🍕 ${getCountAtStage('Assemble')}`;
+  qs('count-load').textContent = `🍕 ${getCountAtStage('Load')}`;
+  qs('count-baking').textContent = `🍕 ${getCountAtStage('Bake')}`;
+  qs('count-cooling').textContent = `🍕 ${getCountAtStage('Cool')}`;
+  qs('count-unload').textContent = `🍕 ${getCountAtStage('Unload')}`;
+  qs('count-billing').textContent = `🍕 ${getCountAtStage('Bill')}`;
+  
+  // Update completion status
+  const completedOrders = ordersFinishedBilling.length;
+  const totalOrders = window.pizzaSimulation.totalOrders;
+  qs('completedOrders').textContent = `${completedOrders} / ${totalOrders}`;
+  
+  // Update throughput calculation
+  if (tt > 0 && completedOrders > 0) {
+    const throughputPerHour = (completedOrders / tt) * 60;
+    qs('throughput').textContent = `${throughputPerHour.toFixed(2)} orders/hr`;
+  } else {
+    qs('throughput').textContent = '-- orders/hr';
+  }
+}
+
+/* ======================== MAIN SIMULATION CONTROL ======================== */
+const playBtn=qs('play'), showResultsBtn=qs('showResults'), generateBtn=qs('generateBtn'), themeToggle=qs('themeToggle'),
+      speedEl=qs('speed'), speedVal=qs('speedVal'), mpfEl=qs('mpf'), 
+      tLabel=qs('tLabel'), svg=qs('svg'), ganttMsg=qs('ganttMsg'),
+      demandRateEl=qs('demandRate'), totalOrdersEl=qs('totalOrders');
+
+let events = [];
+let tMax = 0, rects=[], nowLine=null;
+let playing=false, speed=1, minutesPerSecond=1, t=0, last=performance.now();
+const THEME_STORAGE_KEY = 'pizzaPazzaTheme';
+
+function applyTheme(isLight){
+  document.body.classList.toggle('light-mode', !!isLight);
+  if(themeToggle){
+    themeToggle.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+    themeToggle.setAttribute('aria-pressed', String(!!isLight));
+  }
+}
+
+function getInitialTheme(){
+  try{
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if(stored === 'light') return true;
+    if(stored === 'dark') return false;
+  }catch(e){}
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches;
+}
+
+applyTheme(getInitialTheme());
+
+themeToggle?.addEventListener('click', () => {
+  const nextIsLight = !document.body.classList.contains('light-mode');
+  applyTheme(nextIsLight);
+  try{
+    localStorage.setItem(THEME_STORAGE_KEY, nextIsLight ? 'light' : 'dark');
+  }catch(e){}
+});
+
+// Initialize simulation engine
+window.pizzaSimulation = new PizzaSimulation();
+
+function generateNewSchedule() {
+  // Update simulation parameters
+  window.pizzaSimulation.setDemandRate(parseFloat(demandRateEl.value));
+  window.pizzaSimulation.setTotalOrders(parseInt(totalOrdersEl.value));
+  
+  // Generate new schedule
+  events = window.pizzaSimulation.generateSchedule();
+  
+  // Initialize visualization
+  initScene();
+  
+  console.log('New schedule generated with', events.length, 'events');
+}
+
+function initScene(){
+  // clear svg
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  rects=[]; nowLine=null; t=0; tLabel.textContent='t = 0.0 min';
+  throughputNeedsInit = true;
+
+  if(!events || !events.length){
+    ganttMsg.style.display='block';
+    ganttMsg.textContent='Click "Reset" to create a simulation';
+    playBtn.disabled = true;
+    if(showResultsBtn) showResultsBtn.disabled = true;
+    qs('completedOrders').textContent = '0 / 0';
+    qs('throughput').textContent = '-- orders/hr';
+    throughputSvg = throughputSvg || qs('throughputSvg');
+    if(throughputSvg){
+      while(throughputSvg.firstChild) throughputSvg.removeChild(throughputSvg.firstChild);
+    }
+    throughputLine = null;
+    throughputWindowLine = null;
+    throughputNowLine = null;
+    throughputData = [];
+    throughputWindowData = [];
+    throughputCompletions = [];
+    return;
+  }
+  
+  ganttMsg.style.display='none';
+  playBtn.disabled = false;
+  if(showResultsBtn) showResultsBtn.disabled = false;
+
+  // normalize oven label
+  events.forEach(e=>{ if((e.resource||'').startsWith?.('Oven')) e.resource='Oven'; });
+
+  // compute tMax safely
+  tMax = Math.ceil(Math.max(...events.map(getFinish), 1));
+
+  // Only render Gantt if visible
+  if (chartVisibility.gantt) {
+    makeAxes(svg, tMax);
+
+    // bars
+    rects = events.map(ev=>{
+      const s=getStart(ev), f=getFinish(ev), y=laneY(ev.resource);
+      const r=addBar(svg,y,s,f,tMax,COLORS[(ev.order-1)%COLORS.length]||'#60a5fa');
+      clipWidth(r,s,f,0,tMax);
+      return {r,s,f};
+    });
+
+    // now line
+    const ns=svg.namespaceURI;
+    nowLine=document.createElementNS(ns,'line');
+    nowLine.setAttribute('class','now'); nowLine.setAttribute('y1','12'); nowLine.setAttribute('y2','248');
+    svg.appendChild(nowLine);
+    setNow(0);
+  }
+  
+  updateActors(0, events);
+  
+  // Only initialize inventory chart if visible
+  if (chartVisibility.inventory) {
+    initInventoryChart(events, tMax);
+  }
+
+  if (chartVisibility.throughput) {
+    initThroughputChart(events, tMax);
+  }
+}
+
+function setNow(tt){
+  if(!tMax) return;
+  const x=L_MARGIN+(R_MARGIN-L_MARGIN)*(tt/Math.max(1,tMax));
+  nowLine.setAttribute('x1',x); nowLine.setAttribute('x2',x);
+}
+
+function renderAtTime(targetTime){
+  if(!events.length || !tMax) return;
+  const clamped = Math.max(0, Math.min(targetTime, tMax));
+  t = clamped;
+  tLabel.textContent = `t = ${t.toFixed(1)} min`;
+
+  if(chartVisibility.gantt){
+    if(nowLine) setNow(t);
+    rects.forEach(o=>clipWidth(o.r,o.s,o.f,t,tMax));
+  }
+
+  if(chartVisibility.inventory){
+    updateInventoryNowLine(t, tMax);
+    updateInventoryLines(t, tMax);
+  }
+
+  if(chartVisibility.throughput){
+    updateThroughputNowLine(t, tMax);
+    updateThroughputLine(t, tMax);
+    updateWindowThroughputLine(t, tMax);
+  }
+
+  updateActors(t, events);
+
+  if(t >= tMax){
+    playing = false;
+    playBtn.textContent = '▶︎ Play';
+  }
+}
+
+/* ======================== CHART VISIBILITY TOGGLE ======================== */
+const chartVisibility = {
+  gantt: true,
+  inventory: true,
+  throughput: true
+};
+
+const chartConfig = {
+  gantt: {containerId: 'ganttContainer', buttonId: 'toggleGantt'},
+  inventory: {containerId: 'inventoryContainer', buttonId: 'toggleInventory'},
+  throughput: {containerId: 'throughputContainer', buttonId: 'toggleThroughput'}
+};
+
+function toggleChart(chartName) {
+  if(!(chartName in chartVisibility)) return;
+  chartVisibility[chartName] = !chartVisibility[chartName];
+  const config = chartConfig[chartName];
+  const container = config ? qs(config.containerId) : null;
+  const button = config ? qs(config.buttonId) : null;
+  
+  if (chartVisibility[chartName]) {
+    container?.classList.remove('hidden');
+    button?.classList.add('active');
+    
+    if(chartName === 'throughput' && events.length) {
+      throughputSvg = throughputSvg || qs('throughputSvg');
+      const hasContent = throughputSvg && throughputSvg.childElementCount > 0;
+      if(!hasContent || throughputNeedsInit) {
+        initThroughputChart(events, tMax, t);
+      } else {
+        updateThroughputLine(t, tMax);
+        updateWindowThroughputLine(t, tMax);
+        updateThroughputNowLine(t, tMax);
+      }
+    }
+  } else {
+    container?.classList.add('hidden');
+    button?.classList.remove('active');
+  }
+}
+
+/* Control event handlers */
+generateBtn.onclick = generateNewSchedule;
+
+playBtn.onclick = () => {
+  if(!events.length) return;
+  playing = !playing;
+  playBtn.textContent = playing ? '⏸ Pause' : '▶︎ Play';
+  last = performance.now();
+};
+
+showResultsBtn?.addEventListener('click', () => {
+  if(!events.length || !tMax) return;
+  playing = false;
+  playBtn.textContent = '▶︎ Play';
+  renderAtTime(tMax);
+});
+
+speedEl.oninput = e => { 
+  speed = parseFloat(e.target.value); 
+  speedVal.textContent = `${speed.toFixed(2)}×`; 
+};
+
+mpfEl.oninput = e => { 
+  minutesPerSecond = parseFloat(e.target.value); 
+};
+
+demandRateEl.oninput = updateDemandDisplay;
+
+// Animation loop
+function loop(ts){
+  if(playing && events.length && tMax){
+    const dt=(ts-last)/1000; last=ts;
+    const nextT = Math.min(tMax, t + dt * minutesPerSecond * speed);
+    renderAtTime(nextT);
+  } else {
+    last = ts;
+  }
+  requestAnimationFrame(loop);
+}
+
+// Initialize display
+updateDemandDisplay();
+initScene();
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
