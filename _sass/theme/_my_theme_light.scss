@@ -3,16 +3,16 @@
    ========================================================================== */
 
 /* Color codes used for the theme */
-$primary-color              : #0092ca;
+$primary-color              : #7855ff;
 $dark-primary-color         : mix(#000, $primary-color, 40%);
 $darker-primary-color       : mix(#000, $primary-color, 60%);
 $light-primary-color        : mix(#000, $primary-color, 50%);
 
-$background                 : #eeeeee;
+$background                 : #fbf9ff;
 $background-light           : mix(#fff, $background, 20%);
 $background-lighter         : mix(#fff, $background, 90%);
-$text                       : #222831;
-$link                       : #393e46;
+$text                       : #2a1960;
+$link                       : #5c4ef7;
 $link-dark                  : mix(#000, $link, 25%);
 $link-light                 : mix(#fff, $link, 25%);
 $footer                     : $primary-color;
@@ -37,22 +37,23 @@ $sidebar-screen-min-width   : 1024px;
 /* Daniela light theme colors */
 :root {
   /* Background + base text */
-  --global-bg-color:             #f2f7ff;   /* airy powder blue */
-  --global-base-color:           #e2edff;
-  --global-text-color:           #142349;   /* inky indigo */
-  --global-text-color-light:     #6c7dab;
+  --global-bg-color:             #fcfaff;   /* whisper-soft lavender */
+  --global-base-color:           #f3eeff;   /* card backgrounds */
+  --global-text-color:           #241352;   /* deep purple text */
+  --global-text-color-light:     #7b6ab3;
 
   /* Borders / tables */
-  --global-border-color:         #c8d8ff;
-  --global-code-background-color:#e7efff;
-  --global-code-text-color:      #122147;
-  --global-fig-caption-color:    #6c7dab;
-  --global-thead-color:          #d9e6ff;
+  --global-border-color:         #e5ddff;
+  --global-code-background-color:#fff8ff;
+  --global-code-text-color:      #2d184b;
+  --global-fig-caption-color:    #7b6ab3;
+  --global-thead-color:          #efe6ff;
 
   /* Links */
-  --global-link-color:           #1b5fe8;   /* vivid royal blue */
-  --global-link-color-hover:     #1346ad;   /* deeper sapphire */
-  --global-link-color-visited:   #0f307a;
+  --global-link-color:           #5f5cf8;   /* bright indigo */
+  --global-link-color-hover:     #4435c2;   /* bolder violet */
+  --global-link-color-visited:   #e251a8;   /* saturated pink */
+  --global-heading-icon-color:   #c49bff;   /* lavender flower */
 
   /* Navbar / masthead links */
   --global-masthead-link-color:        var(--global-text-color);

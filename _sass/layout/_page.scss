@@ -107,6 +107,23 @@
   }
 }
 
+.page__content h2,
+.page__content h3,
+.page__content h4,
+.archive h2,
+.archive h3,
+.archive h4 {
+  display: flex;
+  align-items: center;
+
+  &::before {
+    content: "✿";
+    margin-right: 0.35em;
+    color: var(--global-heading-icon-color, var(--global-link-color));
+    font-size: 0.85em;
+  }
+}
+
 .page__hero {
   position: relative;
   margin-bottom: 2em;

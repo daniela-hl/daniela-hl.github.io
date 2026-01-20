@@ -3,16 +3,16 @@
    ========================================================================== */
 
 /* Color codes used for the theme */
-$primary-color              : #0092ca;
+$primary-color              : #8f5efc;
 $dark-primary-color         : mix(#000, $primary-color, 40%);
 $darker-primary-color       : mix(#000, $primary-color, 60%);
 $light-primary-color        : mix(#000, $primary-color, 50%);
 
-$background                 : #eeeeee;
+$background                 : #160f28;
 $background-light           : mix(#fff, $background, 20%);
 $background-lighter         : mix(#fff, $background, 90%);
-$text                       : #222831;
-$link                       : #393e46;
+$text                       : #f4e9ff;
+$link                       : #b7a8ff;
 $link-dark                  : mix(#000, $link, 25%);
 $link-light                 : mix(#fff, $link, 25%);
 $footer                     : $primary-color;
@@ -34,25 +34,26 @@ $navicon-height             : 4px;
 $sidebar-link-max-width     : 250px;
 $sidebar-screen-min-width   : 1024px;
 
-/* Daniela light theme colors */
-:root {
+/* Daniela dark theme colors */
+html[data-theme="dark"] {
   /* Background + base text */
-  --global-bg-color:             #fdf7ff;   /* very soft lavender */
-  --global-base-color:           #3a2b4f;   /* deep eggplant text */
-  --global-text-color:           #271833;
-  --global-text-color-light:     #7f6b9b;
+  --global-bg-color:             #0d0718;   /* midnight plum */
+  --global-base-color:           #1f1333;   /* to support cards */
+  --global-text-color:           #f6edff;   /* pale lilac text */
+  --global-text-color-light:     #c2b4dd;
 
   /* Borders / tables */
-  --global-border-color:         #e4d7ff;
-  --global-code-background-color:#f7f2ff;
-  --global-code-text-color:      #271833;
-  --global-fig-caption-color:    #7f6b9b;
-  --global-thead-color:          #e4d7ff;
+  --global-border-color:         #2e1f46;
+  --global-code-background-color:#1a0f2b;
+  --global-code-text-color:      #f6edff;
+  --global-fig-caption-color:    #c2b4dd;
+  --global-thead-color:          #2e1f46;
 
   /* Links */
-  --global-link-color:           #5b5fe6;   /* periwinkle blue */
-  --global-link-color-hover:     #3e40b8;   /* darker indigo */
-  --global-link-color-visited:   #9a4fd8;   /* purple/pink */
+  --global-link-color:           #84b5ff;   /* icy blue */
+  --global-link-color-hover:     #d98ffb;   /* neon pink */
+  --global-link-color-visited:   #f472b6;   /* punchy rose */
+  --global-heading-icon-color:   #d1a7ff;   /* lavender flower */
 
   /* Navbar / masthead links */
   --global-masthead-link-color:        var(--global-text-color);

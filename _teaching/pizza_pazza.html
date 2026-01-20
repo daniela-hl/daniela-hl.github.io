@@ -705,13 +705,19 @@ function calculateInventoryOverTime(events, tMax){
     
     const ordersStartedPrep = getOrdersAtStage('Sauce');
     const ordersFinishedAssembly = getOrdersCompletedStage('Assemble');
+    const ordersStartedLoading = getOrdersAtStage('Load oven');
     const ordersFinishedBaking = getOrdersCompletedStage('Bake');
+    const ordersStartedCoolingStage = getOrdersAtStage('Cool');
     const ordersFinishedCooling = getOrdersCompletedStage('Cool');
     const ordersFinishedBilling = getOrdersCompletedStage('Bill');
     
     const jeanInventory = ordersStartedPrep.filter(order => !ordersFinishedAssembly.includes(order)).length * pizzasPerOrder;
-    const ovenInventory = ordersFinishedAssembly.filter(order => !ordersFinishedBaking.includes(order)).length * pizzasPerOrder;
-    const coolInventory = ordersFinishedBaking.filter(order => !ordersFinishedCooling.includes(order)).length * pizzasPerOrder;
+    const ovenBuffer = ordersFinishedAssembly.filter(order => !ordersStartedLoading.includes(order)).length * pizzasPerOrder;
+    const ovenBaking = ordersStartedLoading.filter(order => !ordersFinishedBaking.includes(order)).length * pizzasPerOrder;
+    const ovenInventory = ovenBuffer + ovenBaking;
+    const coolingQueue = ordersFinishedBaking.filter(order => !ordersStartedCoolingStage.includes(order)).length * pizzasPerOrder;
+    const coolingInProcess = ordersStartedCoolingStage.filter(order => !ordersFinishedCooling.includes(order)).length * pizzasPerOrder;
+    const coolInventory = coolingQueue + coolingInProcess;
     const jacqInventory = ordersFinishedCooling.filter(order => !ordersFinishedBilling.includes(order)).length * pizzasPerOrder;
     
     inventoryData.Jean.push({time, inventory: jeanInventory});
@@ -743,7 +749,7 @@ function initInventoryChart(events, tMax){
   makeInventoryAxes(inventorySvg, tMax, dynamicMax);
   
   // Initialize empty paths for each resource that will be drawn progressively
-  ['Jean', 'Oven', 'Cooling Rack', 'Jacqueline'].forEach(resource => {
+  ['Jean', 'Oven', 'Jacqueline', 'Cooling Rack'].forEach(resource => {
     createInventoryPath(inventorySvg, resource);
   });
   
@@ -756,10 +762,14 @@ function initInventoryChart(events, tMax){
   updateInventoryNowLine(0, tMax);
 }
 
+function inventoryPathId(resource){
+  return `inventory-${resource.replace(/\s+/g, '-')}`;
+}
+
 function createInventoryPath(svg, resource){
   const ns = svg.namespaceURI;
   const path = document.createElementNS(ns, 'path');
-  path.setAttribute('id', `inventory-${resource}`);
+  path.setAttribute('id', inventoryPathId(resource));
   path.setAttribute('stroke', INVENTORY_COLORS[resource] || '#60a5fa');
   path.setAttribute('stroke-width', '3');
   path.setAttribute('fill', 'none');
@@ -783,8 +793,8 @@ function updateInventoryLines(currentTime, tMax){
   
   const maxInventory = inventoryChartMax || INVENTORY_MAX;
   
-  ['Jean', 'Oven', 'Cooling Rack', 'Jacqueline'].forEach(resource => {
-    const path = inventorySvg.querySelector(`#inventory-${resource}`);
+  ['Jean', 'Oven', 'Jacqueline', 'Cooling Rack'].forEach(resource => {
+    const path = inventorySvg.querySelector(`#${inventoryPathId(resource)}`);
     if(!path) return;
     
     const data = inventoryData[resource];
