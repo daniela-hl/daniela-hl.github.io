@@ -4,7 +4,8 @@ collection: teaching
 type: "MBA class"
 permalink: /teaching/Ops-teaching
 venue: "Kellogg School of Management"
-date: "01-01-2024"
+date: 2024-01-01
+teaching_period: "2024 - Present"
 location: "Evanston and Chicago, IL, USA"
 ---
 
@@ -23,4 +24,4 @@ time management, and supply chain management.
 
 ## Class materials
 
-<a href="/teaching/pizza_pazza.html" target="_blank" rel="noopener">Pizza Pazza visualization tool</a>.
+<a href="/teaching/pizza_pazza.html" target="_blank" rel="noopener">Pizza Pazza visualization tool</a>
