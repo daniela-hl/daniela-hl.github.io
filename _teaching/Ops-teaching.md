@@ -25,3 +25,5 @@ time management, and supply chain management.
 ## Class materials
 
 <a href="/teaching/pizza_pazza.html" target="_blank" rel="noopener">Pizza Pazza visualization tool</a>
+
+<a href="https://daniela-hl.github.io/queue-sim/" target="_blank" rel="noopener">Queueing simulator and computations tool</a>
