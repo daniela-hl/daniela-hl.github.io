@@ -3,7 +3,7 @@ title: "Exponential Tail Bounds on Queues"
 collection: talks
 type: "Conference Talk"
 permalink: /talks/2024-Expo-Tail-Bounds
-date: 2025
+date: 2025-09-20
 ---
 
 This talk corresponds to the paper titled "Exponential Tail Bounds on Queues: A Confluence of Non-Asymptotic Heavy-Traffic and Large Deviations."

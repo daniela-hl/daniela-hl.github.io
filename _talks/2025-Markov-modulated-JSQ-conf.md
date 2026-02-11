@@ -3,7 +3,7 @@ title: "Transform Method for Markov-Modulated Queues (conference version)"
 collection: talks
 type: "Conference Talk"
 permalink: /talks/2025-Markov-modulated-JSQ-conf
-date: 2025
+date: 2025-11-02
 ---
 
 This talk corresponds to the paper titled "Markov Modulated JSQ in Heavy Traffic via the Poisson Equation."
