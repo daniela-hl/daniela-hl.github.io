@@ -28,4 +28,4 @@ time management, and supply chain management.
 
 <a href="https://daniela-hl.github.io/queue-sim/" target="_blank" rel="noopener">Queueing simulator and computations tool</a>
 
-<a href="/teaching/OPNS430/webpage-load-time.html" target="_blank" rel="noopener">Website load time experiment</a>
+<a href="/teaching/website-load-time-experiment" target="_blank" rel="noopener">Website load time experiment</a>
