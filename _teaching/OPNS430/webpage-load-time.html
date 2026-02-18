@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Webpage Load Time (Start → Last Byte)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; line-height: 1.35; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    input[type="url"] { flex: 1; min-width: 280px; padding: 10px 12px; font-size: 16px; }
+    button { padding: 10px 12px; font-size: 16px; cursor: pointer; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin-top: 16px; }
+    .grid { display: grid; grid-template-columns: 220px 1fr; gap: 8px 12px; }
+    .k { color: #333; font-weight: 600; }
+    .v { font-variant-numeric: tabular-nums; }
+    .muted { color: #666; font-size: 14px; }
+    .warn { color: #8a4b00; }
+    .err { color: #b00020; white-space: pre-wrap; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Webpage Load Time</h1>
+  <p class="muted">
+    Measures request timing from <b>start → last byte received</b> using <code>fetch()</code> + the Performance API.
+    Note: Cross-origin sites may block this due to CORS.
+  </p>
+
+  <div class="row">
+    <input id="url" type="url" placeholder="https://example.com" value="https://example.com" />
+    <button id="run">Measure</button>
+    <button id="clear">Clear</button>
+  </div>
+
+  <div id="out" class="card" style="display:none;"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const out = $("out");
+
+    function ms(n) {
+      if (typeof n !== "number" || !isFinite(n)) return "—";
+      return `${n.toFixed(1)} ms`;
+    }
+
+    function safeUrl(u) {
+      // Basic normalization + validation
+      const url = new URL(u);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        throw new Error("Only http:// and https:// URLs are supported.");
+      }
+      return url.toString();
+    }
+
+    function render(result) {
+      out.style.display = "block";
+      out.innerHTML = result;
+    }
+
+    function getResourceTiming(url) {
+      // Find the most recent matching resource timing entry
+      const entries = performance.getEntriesByType("resource")
+        .filter(e => e.name === url)
+        .sort((a, b) => b.startTime - a.startTime);
+      return entries[0] || null;
+    }
+
+    async function measureOnce(rawUrl) {
+      const url = safeUrl(rawUrl);
+
+      // Clear previous resource timings so we don't pick up older runs
+      performance.clearResourceTimings();
+
+      // Use a cache-busting query param so we measure a real network request
+      const u = new URL(url);
+      u.searchParams.set("_cb", String(Date.now()));
+      const finalUrl = u.toString();
+
+      const start = performance.now();
+      let lastByte = null;
+      let bytes = 0;
+      let status = null;
+
+      try {
+        // Important: mode:'cors' will enforce CORS. If blocked, we'll catch.
+        const res = await fetch(finalUrl, {
+          method: "GET",
+          mode: "cors",
+          cache: "no-store",
+          redirect: "follow",
+        });
+
+        status = res.status;
+
+        // Read the body fully to measure "last byte received"
+        const reader = res.body?.getReader();
+        if (!reader) {
+          // Some responses may not expose body in some cases; fallback to blob()
+          const blob = await res.blob();
+          bytes = blob.size;
+        } else {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            bytes += value.byteLength;
+          }
+        }
+
+        lastByte = performance.now();
+      } catch (e) {
+        // Likely CORS or network error
+        const elapsed = performance.now() - start;
+        return {
+          url,
+          finalUrl,
+          ok: false,
+          error: String(e?.message || e),
+          elapsed,
+        };
+      }
+
+      const total = lastByte - start;
+
+      // Resource Timing (may be limited or zeroed by TAO/CORS policies)
+      const rt = getResourceTiming(finalUrl);
+
+      return {
+        url,
+        finalUrl,
+        ok: true,
+        status,
+        bytes,
+        start,
+        lastByte,
+        total,
+        resourceTiming: rt ? {
+          // all are in ms
+          startTime: rt.startTime,
+          redirect: rt.redirectEnd - rt.redirectStart,
+          dns: rt.domainLookupEnd - rt.domainLookupStart,
+          tcp: rt.connectEnd - rt.connectStart,
+          tls: (rt.secureConnectionStart > 0) ? (rt.connectEnd - rt.secureConnectionStart) : null,
+          ttfb: rt.responseStart - rt.requestStart,
+          download: rt.responseEnd - rt.responseStart,
+          duration: rt.duration,
+          transferSize: rt.transferSize,
+          encodedBodySize: rt.encodedBodySize,
+          decodedBodySize: rt.decodedBodySize
+        } : null
+      };
+    }
+
+    function buildHtml(r) {
+      if (!r.ok) {
+        return `
+          <h2>Result</h2>
+          <div class="err"><b>Error:</b> ${r.error}</div>
+          <p class="muted warn">
+            This is often a <b>CORS</b> restriction. Many sites do not allow browsers to read their responses
+            from other origins, which prevents timing “last byte received”.
+          </p>
+          <div class="grid">
+            <div class="k">URL</div><div class="v">${r.url}</div>
+            <div class="k">Requested URL</div><div class="v">${r.finalUrl}</div>
+            <div class="k">Elapsed before failure</div><div class="v">${ms(r.elapsed)}</div>
+          </div>
+          <p class="muted">
+            If you need this to work for any URL, use a small server-side proxy (your server fetches the URL and
+            returns it with CORS headers).
+          </p>
+        `;
+      }
+
+      const rt = r.resourceTiming;
+
+      const timingSection = rt ? `
+        <h3>Network Timing (Performance API)</h3>
+        <p class="muted">
+          Note: Some fields may be <b>0</b> or unavailable unless the server sends
+          <code>Timing-Allow-Origin</code>.
+        </p>
+        <div class="grid">
+          <div class="k">Redirect</div><div class="v">${ms(rt.redirect)}</div>
+          <div class="k">DNS lookup</div><div class="v">${ms(rt.dns)}</div>
+          <div class="k">TCP connect</div><div class="v">${ms(rt.tcp)}</div>
+          <div class="k">TLS handshake</div><div class="v">${rt.tls == null ? "—" : ms(rt.tls)}</div>
+          <div class="k">TTFB</div><div class="v">${ms(rt.ttfb)}</div>
+          <div class="k">Download</div><div class="v">${ms(rt.download)}</div>
+          <div class="k">Reported duration</div><div class="v">${ms(rt.duration)}</div>
+          <div class="k">transferSize</div><div class="v">${rt.transferSize ?? "—"} bytes</div>
+          <div class="k">encodedBodySize</div><div class="v">${rt.encodedBodySize ?? "—"} bytes</div>
+          <div class="k">decodedBodySize</div><div class="v">${rt.decodedBodySize ?? "—"} bytes</div>
+        </div>
+      ` : `
+        <h3>Network Timing (Performance API)</h3>
+        <p class="muted warn">
+          No detailed Resource Timing entry was available. You’ll still get total time from start → last byte,
+          but per-phase breakdown may be missing.
+        </p>
+      `;
+
+      return `
+        <h2>Result</h2>
+        <div class="grid">
+          <div class="k">URL</div><div class="v">${r.url}</div>
+          <div class="k">Requested URL</div><div class="v">${r.finalUrl}</div>
+          <div class="k">HTTP status</div><div class="v">${r.status}</div>
+          <div class="k">Bytes read</div><div class="v">${r.bytes} bytes</div>
+          <div class="k">Total (start → last byte)</div><div class="v"><b>${ms(r.total)}</b></div>
+        </div>
+        ${timingSection}
+      `;
+    }
+
+    $("run").addEventListener("click", async () => {
+      const url = $("url").value.trim();
+      render(`<div class="muted">Measuring…</div>`);
+      try {
+        const r = await measureOnce(url);
+        render(buildHtml(r));
+      } catch (e) {
+        render(`<div class="err"><b>Error:</b> ${String(e?.message || e)}</div>`);
+      }
+    });
+
+    $("clear").addEventListener("click", () => {
+      out.style.display = "none";
+      out.innerHTML = "";
+    });
+  </script>
+</body>
+</html>
