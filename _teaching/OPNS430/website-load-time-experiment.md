@@ -8,13 +8,23 @@ permalink: /teaching/website-load-time-experiment
 
 ## Experiment Description
 
-Jacqueline took a few MBA classes online, and is trying to implement Lean Tools at the Pizza Pazza Takeout Facility. She created the following dashboard: <a href="/teaching/OPNS430/lean-dashboard.html" target="_blank" rel="noopener">Pizza Pazza Lean Dashboard.</a>
+Jacqueline recently completed several MBA courses and is implementing Lean management tools at the Pizza Pazza Takeout Facility. As part of her initiative, she developed a real-time operations dashboard to monitor throughput, WIP, lead time, OTIF, and quality-at-source issues:
 
-Jean approved the operational measures displayed in the dashboard, but wants to make sure the website loads fast because he wants the measures to be updated and doesn't want to deal with slow websites (can you blame him?). Hence, Jacqueline created the following improved dashboard: <a href="/teaching/OPNS430/lean-dashboard-improved.html" target="_blank" rel="noopener">Pizza Pazza Lean Dashboard (improved)</a>
+ <a href="/teaching/OPNS430/lean-dashboard.html" target="_blank" rel="noopener">View dashboard</a>
 
-## Instructions
+Jean agrees with the operational metrics but is concerned about system responsiveness. During peak hours, managers need real-time visibility, and even small delays may reduce usability.
 
-Your role is to determine if the improvements implemented by Jacqueline were effective, that is, if the improved website is indeed faster to load.
+Jacqueline therefore launched an updated version of the dashboard, claiming it improves load performance:
 
-For such goal, you may use the following tool: <a href="/teaching/OPNS430/webpage-load-time.html" target="_blank" rel="noopener">Webpage load time gauge</a>
+<a href="/teaching/OPNS430/lean-dashboard-improved.html" target="_blank" rel="noopener">View improved version</a>
+
+## Your role
+
+You are acting as an operations consultant to Pizza Pazza.
+
+Your objective is to determine whether the “improved” dashboard meaningfully reduces page load time.
+
+To conduct your analysis, you may use the following measurement tool:
+
+ <a href="/teaching/OPNS430/webpage-load-time.html" target="_blank" rel="noopener">Launch tool</a>
 
