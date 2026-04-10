@@ -5,12 +5,286 @@ permalink: /talks/
 author_profile: true
 ---
 
-{% if site.talkmap_link == true %}
+{% include base_path %}
 
-<p style="text-decoration:underline;"><a href="/talkmap.html">See a map of all the places I've given a talk!</a></p>
+<style>
+.talk-details {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 0.5rem 0.85rem;
+  margin: 0.1rem 0 0.5rem 0.6rem;
+  background-color: transparent;
+  font-size: 0.8rem;
+}
+.talk-details summary {
+  font-weight: 400;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.talk-details p {
+  margin: 0.35rem 0;
+}
+.talk-details ul {
+  margin: 0.25rem 0 0.35rem 1.2rem;
+  padding: 0;
+}
+</style>
 
-{% endif %}
 
-{% for post in site.talks reversed %}
-  {% include archive-single-talk.html %}
-{% endfor %}
+<h2>Conference talks</h2>
+
+<ol>
+  <li>Transform Method for Markov-Modulated Queues
+    {% assign p = site.data.papers | where: "id", "markov_jsq" | first %}
+    <details class="talk-details">
+      <summary>Given at multiple conferences during 2025. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Chicago Operations Workshop, 2025</li>
+        <li>APS conference, 2025</li>
+        <li>Allerton conference, 2025 (presented by Izzy)</li>
+        <li>INFORMS 2025</li>
+        <li>YEQT 2025</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Markov Modulated - YEQT 2025.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">YEQT 2025 slides</a>.</p>
+    </details>
+  </li>
+
+  <li>Exponential Tail Bounds on Queues
+    {% assign p = site.data.papers | where: "id", "expo_tail_bounds" | first %}
+    <details class="talk-details">
+      <summary>Given at the Allerton conference, 2024. Click for more information.</summary>
+      <p><strong>Coauthors:</strong>
+        {% for c in p.coauthors %}<a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.name }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}.
+      </p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Allerton conference, 2024 (given by Daniela)</li>
+        <li>Various venues during 2023 and 2024 (given by Siva and Prakirt)</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Expo Tail Bounds - Allerton 2024.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">Allerton 2024 slides</a>.</p>
+    </details>
+  </li>
+
+  <li>Queue Length Behavior in Load Balancing Systems Under Power-of-d Choices: Many-Server Heavy-Traffic Regime
+    {% assign p = site.data.papers | where: "id", "many_server_lb" | first %}
+    <details class="talk-details">
+      <summary>Given at INFORMS 2020 and INFORMS 2021. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>INFORMS 2020 (Anaheim, CA, USA)</li>
+        <li>INFORMS 2021 (online)</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Many Servers - INFORMS 2021.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">INFORMS 2021 slides</a>.</p>
+    </details>
+  </li>
+
+  <li>Heavy-Traffic Analysis of the Generalized Switch under Multidimensional State Space Collapse
+    {% assign p = site.data.papers | where: "id", "gen_switch_no_crp" | first %}
+    <details class="talk-details">
+      <summary>Given at MAMA Workshop 2019, INFORMS 2019, and SIGMETRICS 2020. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>MAMA Workshop 2019 (Phoenix, AZ)</li>
+        <li>INFORMS 2019 (Seattle, WA)</li>
+        <li>SIGMETRICS 2020 (online)</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Gen Switch - SIGMETRICS 2020.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">SIGMETRICS 2020 slides</a>.</p>
+      <p><strong>Video:</strong> <a href="https://www.youtube.com/watch?v=hBVmF5DtZvk" target="_blank" rel="noopener">SIGMETRICS 2020 presentation</a>.</p>
+    </details>
+  </li>
+
+  <li>Transform Methods for Heavy-Traffic Analysis
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    <details class="talk-details">
+      <summary>Given at INFORMS-APS 2019 (Brisbane, Australia). Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>INFORMS-APS 2019 (Brisbane, Australia)</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Transform Methods - APS 2019.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">APS 2019 slides</a>.</p>
+    </details>
+  </li>
+</ol>
+
+
+<h2>Seminar talks</h2>
+
+<ol>
+  <li>Transform Method for Markov-Modulated Queues
+    {% assign p = site.data.papers | where: "id", "markov_jsq" | first %}
+    <details class="talk-details">
+      <summary>Given at the SNAPP seminar, December 2025. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>SNAPP seminar, December 1, 2025 (most complete version of the talk)</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Markov Modulated - SNAPP 2025.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">SNAPP 2025 slides</a>.</p>
+      <p><strong>Video:</strong> <a href="https://youtu.be/Vbv8kML3_HQ" target="_blank" rel="noopener">SNAPP seminar recording</a>.</p>
+    </details>
+  </li>
+
+  <li>Performance Analysis of Data Center Networks: Drift Method and Transform Techniques
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    {% assign p2 = site.data.papers | where: "id", "gen_switch_no_crp" | first %}
+    <details class="talk-details">
+      <summary>Job talk, given at multiple universities between February 2021 and October 2022. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong></p>
+      <ul>
+        <li>"<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>"</li>
+        <li>"<a href="{{ p2.url }}" target="_blank" rel="noopener">{{ p2.title }}</a>"</li>
+      </ul>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Kellogg School of Management, Northwestern University, October 2022</li>
+        <li>Math department, William &amp; Mary, February 2021</li>
+        <li>IEOR, UC Berkeley, February 2021</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Job Talk - Kellogg Oct 2022.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">Kellogg 2022 slides</a>.</p>
+    </details>
+  </li>
+
+  <li>Minimizing Delay in Supermarket-Checkout Systems
+    {% assign p = site.data.papers | where: "id", "many_server_lb" | first %}
+    <details class="talk-details">
+      <summary>Given at William &amp; Mary, April 2022. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Math department, William &amp; Mary, April 2022</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Supermarket Checkout - WM Apr 2022.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">William &amp; Mary 2022 slides</a>.</p>
+    </details>
+  </li>
+
+  <li>Heavy-Traffic Analysis of the Generalized Switch with no Complete Resource Pooling
+    {% assign p = site.data.papers | where: "id", "gen_switch_no_crp" | first %}
+    <details class="talk-details">
+      <summary>Given at an online seminar, July 2020. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Online seminar, July 2020</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Gen Switch no CRP - Jul 2020.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">Online seminar 2020 slides</a>.</p>
+    </details>
+  </li>
+
+  <li>Mathematical Models to Analyze Queueing Systems: Minimizing Delay in Data Centers
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    <details class="talk-details">
+      <summary>Given at universities in Chile, December 2019 and January 2020. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> overview talk drawing on multiple works, including "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Pontificia Universidad Cat&oacute;lica de Chile (Santiago), January 2020</li>
+        <li>Universidad de Santiago (Chile), December 2019</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Math Models - PUC Jan 2020.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">PUC 2020 slides</a> (in Spanish).</p>
+    </details>
+  </li>
+
+  <li>Optimal Resource Allocation in Data Center Networks: Drift Method and Transform Techniques
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    <details class="talk-details">
+      <summary>Given at Amherst, September 2019. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Amherst, September 2019</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Optimal Resource - Amherst Sept 2019.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">Amherst 2019 slides</a>.</p>
+    </details>
+  </li>
+
+  <li>Transform Methods for Heavy-Traffic Analysis
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    <details class="talk-details">
+      <summary>Given at Universidad Adolfo Ib&aacute;&ntilde;ez (Santiago, Chile), December 2018. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Universidad Adolfo Ib&aacute;&ntilde;ez (Santiago, Chile), December 2018</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Transform Methods - UAI Dec 2018.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">UAI 2018 slides</a>.</p>
+    </details>
+  </li>
+
+  <li>Performance Analysis in Data Center Networks
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    <details class="talk-details">
+      <summary>Given at Pontificia Universidad Cat&oacute;lica de Chile, May 2018. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>Pontificia Universidad Cat&oacute;lica de Chile (Santiago), May 2018</li>
+      </ul>
+      <p><strong>Latest slides:</strong> <a href="{{ '/talks/slides/Performance Data Centers - PUC May 2018.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">PUC 2018 slides</a>.</p>
+    </details>
+  </li>
+</ol>
+
+
+<h2>Poster presentations</h2>
+
+<ol>
+  <li>A unified view of the drift method and the MGF method for heavy-traffic analysis
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    <details class="talk-details">
+      <summary>Presented at the iDDA Workshop (China), 2018. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>iDDA Workshop (China), 2018</li>
+      </ul>
+      <p><strong>Poster:</strong> <a href="{{ '/talks/slides/Poster - iDDA Workshop 2018.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">iDDA Workshop 2018 poster</a>.</p>
+    </details>
+  </li>
+
+  <li>A Novel View of the Drift Method for Heavy-Traffic Limits of Queueing Systems
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    <details class="talk-details">
+      <summary>Presented at SIGMETRICS 2018. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>". A technical report is available <a href="http://arxiv.org/abs/1904.10096" target="_blank" rel="noopener">here</a>.</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>SIGMETRICS 2018</li>
+      </ul>
+      <p><strong>Poster:</strong> <a href="{{ '/talks/slides/Poster - SIGMETRICS 2018.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">SIGMETRICS 2018 poster</a>.</p>
+    </details>
+  </li>
+
+  <li>Performance Analysis for Data Centers: A Novel Heavy-Traffic Approach
+    {% assign p = site.data.papers | where: "id", "mgf_transform" | first %}
+    <details class="talk-details">
+      <summary>Presented at the DCL Student Symposium, Georgia Tech, March 2018. Click for more information.</summary>
+      <p><strong>Coauthor:</strong> <a href="{{ p.coauthors[0].url }}" target="_blank" rel="noopener">{{ p.coauthors[0].name }}</a>.</p>
+      <p><strong>Based on:</strong> "<a href="{{ p.url }}" target="_blank" rel="noopener">{{ p.title }}</a>".</p>
+      <p><strong>Presented at:</strong></p>
+      <ul>
+        <li>DCL Student Symposium, Georgia Tech, March 2018</li>
+      </ul>
+      <p><strong>Poster:</strong> <a href="{{ '/talks/slides/Poster - DCL GT March 2018.pdf' | replace: ' ', '%20' }}" target="_blank" rel="noopener">DCL Symposium 2018 poster</a>.</p>
+    </details>
+  </li>
+</ol>

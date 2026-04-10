@@ -1,0 +1,167 @@
+# Central registry for all papers (works like LaTeX \label / \ref).
+# Reference an entry from any page with:
+#   {% assign p = site.data.papers | where: "id", "<id>" | first %}
+# Then use p.title, p.url, p.coauthors, etc.
+
+- id: markov_jsq
+  title: "Markov Modulated JSQ in Heavy Traffic via the Poisson Equation"
+  coauthors:
+    - name: "Izzy Grosof"
+      url: "https://isaacg1.github.io/"
+  url: "https://arxiv.org/abs/2603.00387"
+  date: "2025-12-01"
+  section: under_review
+  abstract:
+    - >-
+      In parallel-server systems with a single stream of arrivals,
+      Join-the-Shortest-Queue (JSQ) is one of the most popular routing algorithms
+      due to its simplicity and strong performance properties: it is well known
+      that routing with JSQ is throughput and heavy-traffic optimal, regardless
+      of whether the servers are homogeneous or not. Further, JSQ is optimal and
+      does not need any information about the servers' rates. In this work, we
+      study a JSQ system with Markov-modulated arrival and service rates.
+      Specifically, we provide sufficient conditions on the Markov-modulated
+      arrival and service rates to ensure state space collapse, and compute the
+      heavy-traffic distribution of queue lengths. We establish the distribution
+      of queue lengths using a novel hybrid methodology that combines the
+      Transform Method for queue-lengths analysis, and Poisson Equation of the
+      Markov-modulating chain.
+  status_text: "Under review."
+
+- id: sek_smod
+  title: "Outperforming Multiserver SRPT at All Loads"
+  coauthors:
+    - name: "Izzy Grosof"
+      url: "https://isaacg1.github.io/"
+  url: "/files/sek-improves.pdf"
+  date: "2025-11-01"
+  section: under_review
+  abstract:
+    - >-
+      A well-designed scheduling policy can unlock significant performance
+      improvements with no additional resources. Multiserver SRPT (SRPT-k) is
+      known to achieve asymptotically optimal mean response time in the heavy
+      traffic limit, as load approaches capacity. No better policy is known for
+      the M/G/$k$ queue in any regime. We introduce a new policy,
+      SRPT-Except-k+1 & Modified SRPT (SEK-SMOD), which is the first policy to
+      provably achieve lower mean response time than SRPT-k. SEK-SMOD outperforms
+      SRPT-k across all loads and all job size distributions. The key idea behind
+      SEK-SMOD is to prioritize large jobs over small jobs in specific scenarios
+      to improve server utilization, and thereby improve the response time of
+      subsequent jobs in expectation. Our proof is a novel application of hybrid
+      worst-case and stochastic techniques to relative analysis, where we
+      analyze the deviations of our proposed SEK-SMOD policy away from the
+      SRPT-k baseline policy. Furthermore, we design Practical-SEK (a simplified
+      variant of SEK-SMOD) and empirically verify the improvement over SRPT-k
+      via simulation.
+  status_text: "Accepted for ACM Sigmetrics 2026; Journal version under review."
+
+- id: expo_tail_bounds
+  title: "Exponential Tail Bounds on Queues: A Confluence of Non-Asymptotic Heavy-Traffic and Large Deviations"
+  coauthors:
+    - name: "Prakirt Jhunjhunwala"
+      url: "https://sites.google.com/view/prakirtjhunjhunwala"
+    - name: "Siva Theja Maguluri"
+      url: "https://sites.google.com/site/sivatheja/"
+  url: "https://arxiv.org/pdf/2306.10187"
+  date: "2023-06-15"
+  section: under_review
+  abstract:
+    - >-
+      In general, obtaining the exact steady-state distribution of queue lengths
+      is not feasible. Therefore, our focus is on establish bounds for the tail
+      probabilities of queue lengths. Specifically, we examine queueing systems
+      under Heavy-Traffic (HT) conditions and provide exponentially decaying
+      bounds for the probability $P(\epsilon q>x)$, where $\epsilon$ is the HT
+      parameter denoting how far the load is from the maximum allowed load. Our
+      bounds are not limited to asymptotic cases and are applicable even for
+      finite values of $\epsilon$, and they get sharper as $\epsilon\to 0$.
+      Consequently, we derive non-asymptotic convergence rates for the tail
+      probabilities. Unlike other approaches such as moment bounds based on
+      drift arguments and bounds on Wasserstein distance using Stein's method,
+      our method yields sharper tail bounds. Furthermore, our results offer
+      bounds on the exponential rate of decay of the tail, given by
+      $-\frac{1}{x} \log P(\epsilon q > x)$ for any finite value of $x$. These
+      can be interpreted as non-asymptotic versions of Large Deviation (LD)
+      results. To obtain our results, we use an exponential Lyapunov function
+      to bound the moment generating function of queue lengths and apply
+      Markov's inequality.
+    - >-
+      We demonstrate our approach by presenting tail bounds for: (i) a
+      continuous time Join-the-shortest queue (JSQ) load balancing system,
+      (ii) a discrete time single-server queue and (iii) an $M/M/n$ queue. We
+      not only bridge the gap between classical-HT and LD regimes but also
+      explore the large system HT regimes for JSQ and $M/M/n$ systems. In
+      these regimes, both the system size and the system load increase
+      simultaneously. Our results also close a gap in the existing literature
+      on the limiting distribution of JSQ in the super-NDS (a.k.a. super
+      slowdown) regime. This contribution is of an independent interest.
+      Here, a key ingredient is a more refined characterization of state space
+      collapse for JSQ system, achieved by using an exponential Lyapunov
+      function designed to approximate the $\ell_\infty$ norm.
+  versions:
+    - status: "Accepted for IFIP Performance 2023. This version is available"
+      url: "https://dl.acm.org/doi/abs/10.1145/3649477.3649488"
+    - status: "Journal version under review. The latest journal version is available"
+      url: "https://arxiv.org/pdf/2306.10187"
+
+- id: gen_switch_no_crp
+  title: "Heavy-Traffic Analysis of Queueing Systems with no Complete Resource Pooling"
+  coauthors:
+    - name: "Siva Theja Maguluri"
+      url: "https://sites.google.com/site/sivatheja/"
+  url: "https://pubsonline.informs.org/doi/abs/10.1287/moor.2021.1248"
+  venue: "Mathematics of Operations Research"
+  year: 2022
+  date: "2022-03-02"
+  section: published
+  citation: "Hurtado Lange, D. A., & Maguluri, S. T. (2022). Heavy-traffic analysis of queueing systems with no complete resource pooling. Mathematics of Operations Research, 47(4), 3129-3155."
+
+- id: log_bounds
+  title: "Logarithmic Heavy Traffic Error Bounds in Generalized Switch and Load Balancing Systems"
+  coauthors:
+    - name: "Sushil Mahavir Varma"
+    - name: "Siva Theja Maguluri"
+      url: "https://sites.google.com/site/sivatheja/"
+  url: "https://www.cambridge.org/core/journals/journal-of-applied-probability/article/abs/logarithmic-heavy-traffic-error-bounds-in-generalized-switch-and-load-balancing-systems/01DA4B718BDBDFB5DDC51A9BBA0A1CA0"
+  venue: "Journal of Applied Probability"
+  year: 2022
+  date: "2022-06-21"
+  section: published
+  citation: "Hurtado-Lange, D., Varma, S. M., & Maguluri, S. T. (2022). Logarithmic heavy traffic error bounds in generalized switch and load balancing systems. Journal of Applied Probability, 59(3), 652-669."
+
+- id: many_server_lb
+  title: "A Load Balancing System in the Many-Server Heavy-Traffic Asymptotics"
+  coauthors:
+    - name: "Siva Theja Maguluri"
+      url: "https://sites.google.com/site/sivatheja/"
+  url: "https://link.springer.com/article/10.1007/s11134-022-09847-7"
+  venue: "Queueing Systems"
+  year: 2022
+  date: "2022-06-21"
+  section: published
+  citation: "Hurtado-Lange, D., & Maguluri, S. T. (2022). A load balancing system in the many-server heavy-traffic asymptotics. Queueing Systems, 101(3), 353-391."
+
+- id: inhomogeneous_pod
+  title: "Throughput and Delay Optimality of Power-of-d Choices in Inhomogeneous Load Balancing Systems"
+  coauthors:
+    - name: "Siva Theja Maguluri"
+      url: "https://sites.google.com/site/sivatheja/"
+  url: "https://www.sciencedirect.com/science/article/pii/S0167637721000924"
+  venue: "Operations Research Letters"
+  year: 2021
+  date: "2021-06-08"
+  section: published
+  citation: "Hurtado-Lange, D., & Maguluri, S. T. (2021). Throughput and delay optimality of power-of-d choices in inhomogeneous load balancing systems. Operations Research Letters, 49(4), 616-622."
+
+- id: mgf_transform
+  title: "Transform Methods for Heavy-Traffic Analysis"
+  coauthors:
+    - name: "Siva Theja Maguluri"
+      url: "https://sites.google.com/site/sivatheja/"
+  url: "https://pubsonline.informs.org/doi/abs/10.1287/stsy.2019.0056"
+  venue: "Stochastic Systems"
+  year: 2020
+  date: "2020-02-05"
+  section: published
+  citation: "Hurtado-Lange, D., & Maguluri, S. T. (2020). Transform methods for heavy-traffic analysis. Stochastic Systems, 10(4), 275-309."
