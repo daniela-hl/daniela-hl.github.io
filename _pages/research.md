@@ -79,12 +79,31 @@ My research is at the intersection of applied probability and optimization. Spec
 {% assign published = site.data.papers | where: "section", "published" | sort: "date" | reverse %}
 <ol class="publication-list" reversed>
 {% for p in published %}
-  {% assign p_url = p.url %}
-  {% unless p_url contains '://' %}{% assign p_url = p_url | prepend: site.baseurl %}{% endunless %}
   <li>
-    <a href="{{ p_url }}"{% if p.url contains '://' %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ p.title }}</a>
+    {% if p.url %}
+      {% assign p_url = p.url %}
+      {% unless p_url contains '://' %}{% assign p_url = p_url | prepend: site.baseurl %}{% endunless %}
+      <a href="{{ p_url }}"{% if p.url contains '://' %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ p.title }}</a>
+    {% else %}
+      {{ p.title }}
+    {% endif %}
     {% if p.venue %} &mdash; <i>{{ p.venue }}</i>{% endif %}
     {% if p.year %}, {{ p.year }}{% endif %}
+    {% if p.note %} <strong>({{ p.note }})</strong>{% endif %}
+    {% if p.abstract %}
+    <details class="research-details">
+      {% if p.coauthors %}
+      <summary>Coauthored with
+        {% for c in p.coauthors %}{% if c.url %}<a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.name }}</a>{% else %}{{ c.name }}{% endif %}{% unless forloop.last %}{% if forloop.rindex == 2 %} and {% else %}, {% endif %}{% endunless %}{% endfor %}.
+        Click for more information.
+      </summary>
+      {% else %}
+      <summary>Click for more information.</summary>
+      {% endif %}
+      <p><strong>Abstract:</strong></p>
+      {% for para in p.abstract %}<p>{{ para }}</p>{% endfor %}
+    </details>
+    {% endif %}
   </li>
 {% endfor %}
 </ol>

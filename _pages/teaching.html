@@ -16,8 +16,12 @@ author_profile: true
 
 <p>Back at William & Mary, I taught Intro to Linear Programming and Intro to Probability and Statistics for undergraduate students, and two Master's level classes on Markov chains and Queueing.</p>
 
+<p>My colleague <a href="https://www.kellogg.northwestern.edu/academics-research/faculty/martin_sebastien/" target="_blank" rel="noopener">Sébastien Martin</a> and I developed an AI case in the Spring 2025, and we were featured in the Wall Street Journal. Here's the <a href="https://www.wsj.com/tech/ai/ai-is-teaching-the-next-generation-of-m-b-a-s-the-classic-case-study-a4eb4227" target="_blank" rel="noopener">article</a>.</p>
+
 
 <h2>Courses and materials</h2>
 {% for post in site.teaching reversed %}
-  {% include archive-single.html %}
+  {% unless post.hidden %}
+    {% include archive-single.html %}
+  {% endunless %}
 {% endfor %}

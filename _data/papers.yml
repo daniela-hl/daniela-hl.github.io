@@ -105,6 +105,52 @@
     - status: "Journal version under review. The latest journal version is available"
       url: "https://arxiv.org/pdf/2306.10187"
 
+- id: transform_tutorial
+  title: "Transform Method for Stochastic Processing and Matching Networks"
+  coauthors:
+    - name: "Sushil Mahavir Varma"
+      url: "https://sites.google.com/view/sushil-varma/home"
+    - name: "Prakirt Jhunjhunwala"
+      url: "https://sites.google.com/view/prakirtjhunjhunwala"
+    - name: "Siva Theja Maguluri"
+      url: "https://sites.google.com/site/sivatheja/"
+  venue: "Tutorials in Operations Research (2026 INFORMS TutORials)"
+  year: 2026
+  date: "2026-11-01"
+  section: published
+  note: "upcoming"
+  abstract:
+    - >-
+      Modern service systems—ranging from cloud data centers and ride-hailing
+      platforms to healthcare facilities—operate at massive scales where
+      congestion is a critical challenge. Utilizing an operations research
+      approach, these systems are analyzed by modeling them as complex
+      stochastic processes, which are typically understood through
+      process-level convergence to fluid and diffusion limits. However, these
+      methods often prove technically dense and provide limited guidance for
+      finite, practical system scales. The transform method, presented in this
+      tutorial, was recently developed as a unified and tractable framework for
+      the steady-state analysis of Stochastic Processing and Matching Networks
+      (SPNs/SMNs). The transform method overcomes the technical hurdles of
+      process-level convergence by working directly with the pre-limit system.
+      By exploiting the zero-drift property of exponential test functions, the
+      method derives explicit functional equations (acting as a proxy for
+      global balance equations) for the transforms (such as moment-generating
+      functions) of queue-length distributions. This approach provides sharp,
+      non-asymptotic performance guarantees, bridging the gap between
+      theoretical asymptotics and real-world system behavior.
+    - >-
+      Since its introduction in 2020 for load-balancing in data center
+      networks, the transform method has been extended to handle realistic
+      complexities, including customer abandonment, state-dependent arrivals,
+      Markov-modulated arrivals, large-system scale, and multi-dimensional
+      networks with multiple bottlenecks. We survey these theoretical advances
+      and demonstrate their practical relevance across diverse domains, such as
+      matching markets and networked service systems. The transform method
+      provides interpretable bounds tied directly to system parameters,
+      offering a powerful analytical alternative to simulation-heavy or purely
+      asymptotic approaches for system design and control.
+
 - id: gen_switch_no_crp
   title: "Heavy-Traffic Analysis of Queueing Systems with no Complete Resource Pooling"
   coauthors:

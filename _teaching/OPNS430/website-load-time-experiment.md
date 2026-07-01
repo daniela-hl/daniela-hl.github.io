@@ -2,6 +2,7 @@
 title: "Website Load Time Experiment"
 collection: teaching
 permalink: /teaching/website-load-time-experiment
+hidden: true
 ---
 
 {% include base_path %}
