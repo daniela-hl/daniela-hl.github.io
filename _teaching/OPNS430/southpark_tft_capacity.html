@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>South Park – TFT vs. Capacity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#38bdf8;
+    --grid:#374151; --success:#10b981; --warning:#f59e0b; --surface:#0b1220;
+    --surface-alt:#1f2937; --border-muted:#374151; --border-strong:#1f2937; --pill-border:#334155;
+    --crit:#38bdf8; --bottle:#f43f5e;
+  }
+  body.light-mode{
+    --bg:#f1f5f9; --panel:#ffffff; --ink:#0f172a; --muted:#475569; --accent:#0284c7;
+    --grid:#cbd5f5; --success:#16a34a; --warning:#d97706; --surface:#f8fafc;
+    --surface-alt:#e2e8f0; --border-muted:#cbd5f5; --border-strong:#cbd5f5; --pill-border:#cbd5f5;
+    --crit:#0284c7; --bottle:#e11d48;
+  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:1240px;margin:22px auto;padding:0 16px}
+  h1{font-size:1.55rem;margin:0 0 6px}
+  h2{font-size:1.15rem;margin:0 0 10px;color:var(--muted)}
+  .header-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .design-credit{margin:0 0 16px;font-size:.8rem;color:var(--muted)}
+  .theme-toggle{background:var(--panel);color:var(--ink);border:1px solid var(--border-muted);border-radius:999px;padding:8px 16px;font-weight:600;cursor:pointer;transition:.2s}
+  .theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+
+  .panel{background:var(--panel);border-radius:14px;padding:16px 18px;margin:16px 0}
+  .lede{color:var(--muted);font-size:.95rem;margin:0 0 4px}
+
+  /* page selector (segmented buttons, like the scenario picker) */
+  .page-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 2px}
+  .page-tabs button{flex:1 1 220px;background:var(--surface-alt);color:var(--ink);border:1px solid var(--border-muted);
+    padding:12px 18px;border-radius:12px;font-weight:700;cursor:pointer;font-size:1.02rem;transition:.2s;text-align:left}
+  .page-tabs button small{display:block;font-weight:400;color:var(--muted);font-size:.78rem;margin-top:3px}
+  .page-tabs button.active{background:var(--accent);color:#04222e;border-color:var(--accent)}
+  .page-tabs button.active small{color:#04384a}
+  .page-tabs button:hover{border-color:var(--accent)}
+  .page{margin-top:2px}
+
+  /* scenario buttons */
+  .scenario-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .scenario-buttons button{background:var(--surface-alt);color:var(--ink);border:1px solid var(--border-muted);
+    padding:10px 16px;border-radius:10px;font-weight:600;cursor:pointer;font-size:.95rem;transition:.2s;text-align:left}
+  .scenario-buttons button small{display:block;font-weight:400;color:var(--muted);font-size:.78rem;margin-top:2px}
+  .scenario-buttons button.active{background:var(--accent);color:#04222e;border-color:var(--accent)}
+  .scenario-buttons button.active small{color:#04384a}
+  .scenario-buttons button:hover{border-color:var(--accent)}
+
+  /* editable table */
+  details.editor{margin-top:12px;border-top:1px solid var(--border-muted);padding-top:12px}
+  details.editor summary{cursor:pointer;color:var(--muted);font-weight:600;font-size:.9rem}
+  table.edit{border-collapse:collapse;width:100%;margin-top:12px;font-size:.92rem}
+  table.edit th,table.edit td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border-muted)}
+  table.edit th{color:var(--muted);font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.03em}
+  table.edit select,table.edit input[type=number]{background:var(--surface);color:var(--ink);
+    border:1px solid var(--border-muted);border-radius:7px;padding:5px 8px;font:inherit;font-size:.9rem}
+  table.edit input[type=number]{width:64px}
+  .swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:middle}
+  .resetlink{background:none;border:0;color:var(--accent);cursor:pointer;font:inherit;font-size:.85rem;padding:0;margin-top:10px;text-decoration:underline}
+
+  /* diagram */
+  .legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin:2px 0 10px;font-size:.85rem;color:var(--muted)}
+  .legend .key{display:flex;align-items:center;gap:7px}
+  .legend .ring{width:15px;height:15px;border-radius:4px;border:3px dashed var(--bottle);box-sizing:border-box}
+  svg{width:100%;display:block;background:var(--surface);border:1px solid var(--border-strong);border-radius:12px}
+
+  /* two result columns */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:940px){ .cols{grid-template-columns:1fr} }
+  .metric{font-size:2.1rem;font-weight:800;line-height:1.1;margin:2px 0 2px}
+  .metric small{font-size:.9rem;font-weight:600;color:var(--muted);display:block}
+  .subhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .tag{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:999px;font-weight:700}
+  .tag.cust{background:rgba(56,189,248,.15);color:var(--crit);border:1px solid var(--crit)}
+  .tag.res{background:rgba(244,63,94,.14);color:var(--bottle);border:1px solid var(--bottle)}
+  .explain{color:var(--muted);font-size:.9rem;margin:10px 0 0}
+  .graph-sub{color:var(--muted);font-size:.86rem;margin:2px 0 8px}
+
+  .takeaway{background:var(--surface);border:1px solid var(--border-strong);border-left:5px solid var(--accent);
+    border-radius:10px;padding:14px 16px;font-size:1rem;line-height:1.5}
+  .takeaway b{color:var(--ink)}
+  .hl-crit{color:var(--crit);font-weight:700}
+  .hl-bottle{color:var(--bottle);font-weight:700}
+
+  /* simulation controls */
+  .sim-row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;margin:8px 0 8px}
+  .sim-controls{display:flex;gap:10px;align-items:center}
+  .sim-controls button{background:var(--accent);color:#04222e;border:0;padding:9px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:.95rem}
+  .sim-controls button.ghost{background:var(--surface-alt);color:var(--ink);border:1px solid var(--border-muted)}
+  .ctl{display:flex;flex-direction:column;gap:5px}
+  .ctl > label{font-size:.76rem;color:var(--muted);font-weight:600}
+  .ctl input[type=range]{width:180px}
+  .preset-buttons{display:flex;gap:6px}
+  .preset-buttons button{background:var(--success);color:#04222e;border:0;padding:6px 11px;border-radius:8px;font-weight:600;cursor:pointer;font-size:.82rem}
+  .preset-buttons button.warning{background:var(--warning)}
+  .preset-buttons button.danger{background:var(--bottle);color:#fff}
+  .toggle-buttons{display:flex;gap:6px}
+  .toggle-buttons button{background:var(--surface-alt);color:var(--ink);border:1px solid var(--border-muted);padding:6px 11px;border-radius:8px;font-weight:600;cursor:pointer;font-size:.82rem}
+  .toggle-buttons button.active{background:var(--accent);color:#04222e;border-color:var(--accent)}
+  .util{font-size:.92rem;font-weight:600;margin:4px 0 10px}
+  .sim-stats{flex-wrap:wrap}
+</style>
+</head>
+<body class="light-mode">
+<div class="wrap">
+  <div class="header-bar">
+    <h1>🏔️ South Park Example (Module 2, OPNS 430)</h1>
+    <button id="themeToggle" class="theme-toggle" aria-pressed="true">🌙 Dark Mode</button>
+  </div>
+  <p class="design-credit">Designed by Daniela Hurtado-Lange. Operations Department, Kellogg School of Management.</p>
+
+  <!-- SCENARIO (shared input to both pages) -->
+  <div class="panel">
+    <h2>Scenario</h2>
+    <p class="lede">Consider an abstract process where task A needs to be completed first, then tasks B and C are performed in parallel with task D. Finally, task E is performed and it can only get started after tasks C and D are completed.</p>
+    <div class="scenario-buttons">
+      <button id="btnP1" onclick="loadScenario(1)">Scenario 1: One resource per task<small>Kyle A · Kenny B · Eric C · Stan D · Timmy E</small></button>
+      <button id="btnP2" onclick="loadScenario(2)">Scenario 2: Kyle covers for Kenny<small>Kyle does A <b>and</b> B</small></button>
+    </div>
+    <p class="lede" id="scenarioNote"></p>
+
+    <details class="editor">
+      <summary>✏️ Edit the process (durations &amp; who does each activity) — run your own what-ifs</summary>
+      <table class="edit">
+        <thead><tr><th>Activity</th><th>Assigned to</th><th>Duration (hrs)</th><th>Depends on</th></tr></thead>
+        <tbody id="editBody"></tbody>
+      </table>
+      <button class="resetlink" onclick="loadScenario(currentPart)">↺ reset to current scenario</button>
+    </details>
+  </div>
+
+  <!-- ============ PAGE SELECTOR ============ -->
+  <div class="page-tabs">
+    <button id="tab1" class="active" onclick="showPage(1)">① The static picture<small>the process, TFT &amp; capacity on paper</small></button>
+    <button id="tab2" onclick="showPage(2)">② Watch it run<small>live simulation &amp; the two graphs</small></button>
+  </div>
+
+  <!-- ============ PAGE 1 · STATIC PICTURE ============ -->
+  <section class="page" id="pageBody1">
+
+      <!-- FLOWCHART (static) -->
+      <div class="panel">
+        <h2>The process</h2>
+        <div class="legend">
+          <span class="key"><span class="ring"></span> The <span class="hl-bottle">&nbsp;bottleneck</span> resource (drives capacity)</span>
+        </div>
+        <svg id="netSvg" viewBox="0 0 900 300" role="img" aria-label="process network"></svg>
+      </div>
+
+      <!-- TWO CONCEPTS -->
+      <div class="cols">
+        <div class="panel">
+          <div class="subhead">
+            <h2 style="margin:0">⏱️ How responsive is my process?</h2>
+            <span class="tag cust">Customer view</span>
+          </div>
+          <div class="metric" id="tftVal">– hrs<small>Theoretical Flow Time — time for <b>one</b> order, start to finish</small></div>
+          <svg id="ganttSvg" viewBox="0 0 520 300" role="img" aria-label="single-job timeline"></svg>
+          <p class="explain">Blocks laid out along <b>time</b>. The longest chain of dependent activities (the <span class="hl-crit">critical path</span>) sets the flow time. Changing <i>who</i> does an activity does <b>not</b> move any block here.</p>
+        </div>
+
+        <div class="panel">
+          <div class="subhead">
+            <h2 style="margin:0">🏭 How much business can it handle?</h2>
+            <span class="tag res">Resource view</span>
+          </div>
+          <div class="metric" id="capVal">– jobs/hr<small>Capacity — steady-state throughput of the whole process</small></div>
+          <svg id="bottleSvg" viewBox="0 0 520 300" role="img" aria-label="workload per person"></svg>
+          <p class="explain">The <b>same</b> blocks re-stacked <b>per person</b>, ignoring the path. The tallest stack is the <span class="hl-bottle">bottleneck</span>; capacity = 1 ÷ its load. Give one person two activities and the stack grows.</p>
+        </div>
+      </div>
+  </section>
+
+  <!-- ============ PAGE 2 · WATCH IT RUN ============ -->
+  <section class="page" id="pageBody2" hidden>
+
+      <!-- SIMULATION CONTROLS -->
+      <div class="panel">
+        <div class="subhead"><h2 style="margin:0">▶︎ Simulation controls</h2></div>
+        <div class="sim-row">
+          <div class="sim-controls">
+            <button id="playBtn" onclick="togglePlay()">▶︎ Play</button>
+            <button id="resetBtn" class="ghost" onclick="resetSim()">↺ Reset</button>
+          </div>
+          <div class="ctl">
+            <label>📥 Demand (arrivals)</label>
+            <input id="demand" type="range" min="0.125" max="1" step="0.005" value="0.25" oninput="onDemand(this.value)">
+            <span id="demVal" class="pill"></span>
+          </div>
+          <div class="ctl">
+            <label>quick set (relative to capacity)</label>
+            <div class="preset-buttons">
+              <button onclick="setDemandRel(0.6)">below cap</button>
+              <button class="warning" onclick="setDemandRel(1)">at cap</button>
+              <button class="danger" onclick="setDemandRel(1.6)">above cap</button>
+            </div>
+          </div>
+          <div class="ctl">
+            <label>⚡ Speed</label>
+            <div class="toggle-buttons" id="speedBtns">
+              <button data-sp="slow" onclick="setSpeed('slow',this)">🐢 Slow</button>
+              <button data-sp="med" class="active" onclick="setSpeed('med',this)">🚶 Med</button>
+              <button data-sp="fast" onclick="setSpeed('fast',this)">🐇 Fast</button>
+            </div>
+          </div>
+        </div>
+        <div id="utilVal" class="util"></div>
+        <div class="status-info sim-stats">
+          <span class="muted">Sim time:</span><span id="stTime" class="pill">0 h</span>
+          <span class="muted">In the process:</span><span id="stInSys" class="pill">0</span>
+          <span class="muted">Completed:</span><span id="stDone" class="pill">0</span>
+          <span class="muted">Measured throughput:</span><span id="stThru" class="pill">—</span>
+        </div>
+      </div>
+
+      <!-- ANIMATED FLOWCHART -->
+      <div class="panel">
+        <h2>Jobs moving through the process</h2>
+        <div class="legend">
+          <span class="key"><span class="ring"></span> The <span class="hl-bottle">&nbsp;bottleneck</span> resource — watch the queue pile up here</span>
+        </div>
+        <svg id="netSvgAnim" viewBox="0 0 900 300" role="img" aria-label="jobs flowing through the process"></svg>
+      </div>
+
+      <!-- TWO LIVE GRAPHS -->
+      <div class="cols">
+        <div class="panel">
+          <div class="subhead">
+            <h2 style="margin:0">⏱️ Time each job spends in the system</h2>
+            <span class="tag cust">Customer view</span>
+          </div>
+          <div class="graph-sub" id="scatterSub"></div>
+          <svg id="scatterSvg" viewBox="0 0 520 320" role="img" aria-label="time in system versus arrival time"></svg>
+        </div>
+
+        <div class="panel">
+          <div class="subhead">
+            <h2 style="margin:0">🏭 Jobs waiting in front of each resource</h2>
+            <span class="tag res">Resource view</span>
+          </div>
+          <div class="graph-sub" id="queueSub"></div>
+          <div class="legend" id="queueLegend"></div>
+          <svg id="queueSvg" viewBox="0 0 520 320" role="img" aria-label="jobs waiting per resource over time"></svg>
+        </div>
+      </div>
+  </section>
+
+  <!-- TAKEAWAY -->
+  <div class="panel">
+    <div class="takeaway" id="takeaway"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- fixed process topology (the South Park abstraction) ----------
+   A -> B -> C -\
+    \-> D ------> E
+   All five must finish for the job to be done.                              */
+const PEOPLE = {
+  Kyle:  '#22c55e',   // green hat
+  Kenny: '#f97316',   // orange parka
+  Eric:  '#ef4444',   // Cartman red
+  Stan:  '#3b82f6',   // blue hat
+  Timmy: '#a855f7'    // purple
+};
+const PRED = { A:[], B:['A'], C:['B'], D:['A'], E:['C','D'] };
+const IDS  = ['A','B','C','D','E'];
+
+/* editable state */
+let state = {};        // id -> {person, dur}
+let currentPart = 1;
+
+const SCENARIOS = {
+  1: { A:{person:'Kyle',dur:2}, B:{person:'Kenny',dur:2}, C:{person:'Eric',dur:2}, D:{person:'Stan',dur:3}, E:{person:'Timmy',dur:2} },
+  2: { A:{person:'Kyle',dur:2}, B:{person:'Kyle', dur:2}, C:{person:'Eric',dur:2}, D:{person:'Stan',dur:3}, E:{person:'Timmy',dur:2} }
+};
+const NOTES = {
+  1: "Each person handles one activity. Stan's activity (D) is off to the side — it runs in parallel with B→C.",
+  2: "Kenny is out, so Kyle now does A and B. Watch what happens to each metric."
+};
+
+function loadScenario(part){
+  currentPart = part;
+  state = {};
+  IDS.forEach(id => state[id] = { ...SCENARIOS[part][id] });
+  document.getElementById('scenarioNote').textContent = NOTES[part];
+  document.getElementById('btnP1').classList.toggle('active', part===1);
+  document.getElementById('btnP2').classList.toggle('active', part===2);
+  buildEditor();
+  buildQueueLegend();
+  render();
+  if(document.getElementById('playBtn')) resetSim();
+}
+
+/* ---------- editor ---------- */
+function buildEditor(){
+  const body = document.getElementById('editBody');
+  body.innerHTML = IDS.map(id=>{
+    const s = state[id];
+    const opts = Object.keys(PEOPLE).map(p=>
+      `<option value="${p}" ${p===s.person?'selected':''}>${p}</option>`).join('');
+    const dep = PRED[id].length ? PRED[id].join(', ') : '—';
+    return `<tr>
+      <td><span class="swatch" id="sw-${id}"></span><b>${id}</b></td>
+      <td><select onchange="setPerson('${id}',this.value)">${opts}</select></td>
+      <td><input type="number" min="0.5" max="12" step="0.5" value="${s.dur}" onchange="setDur('${id}',this.value)"></td>
+      <td style="color:var(--muted)">${dep}</td>
+    </tr>`;
+  }).join('');
+  IDS.forEach(id=>{ document.getElementById('sw-'+id).style.background = PEOPLE[state[id].person]; });
+}
+function setPerson(id,v){ state[id].person=v; document.getElementById('sw-'+id).style.background=PEOPLE[v]; resetSim(); }
+function setDur(id,v){ state[id].dur=Math.max(0.5,parseFloat(v)||0.5); resetSim(); }
+
+/* ---------- scheduling math ---------- */
+function computeSchedule(){
+  const indeg={}, succ={};
+  IDS.forEach(i=>{indeg[i]=PRED[i].length; succ[i]=[];});
+  IDS.forEach(i=>PRED[i].forEach(p=>succ[p].push(i)));
+  const q=IDS.filter(i=>indeg[i]===0), order=[];
+  while(q.length){ const n=q.shift(); order.push(n);
+    succ[n].forEach(s=>{ if(--indeg[s]===0) q.push(s); }); }
+
+  const ES={}, EF={};
+  order.forEach(n=>{ ES[n]=PRED[n].reduce((m,p)=>Math.max(m,EF[p]),0); EF[n]=ES[n]+state[n].dur; });
+  const proj=Math.max(...IDS.map(i=>EF[i]));
+
+  const LF={}, LS={};
+  [...order].reverse().forEach(n=>{
+    LF[n] = succ[n].length ? Math.min(...succ[n].map(s=>LS[s])) : proj;
+    LS[n] = LF[n]-state[n].dur;
+  });
+  const critical={}; IDS.forEach(i=>critical[i]=Math.abs(LS[i]-ES[i])<1e-6);
+  return {ES,EF,LS,LF,proj,critical};
+}
+function computeLoads(){
+  const load={}; Object.keys(PEOPLE).forEach(p=>load[p]=0);
+  IDS.forEach(i=>load[state[i].person]+=state[i].dur);
+  const maxLoad=Math.max(...Object.values(load));
+  const bottlenecks=Object.keys(load).filter(p=>Math.abs(load[p]-maxLoad)<1e-6 && load[p]>0);
+  return {load,maxLoad,bottlenecks};
+}
+
+/* ---------- rendering ---------- */
+const NODE_POS = {
+  A:{x:150,y:150}, B:{x:340,y:222}, C:{x:520,y:222}, D:{x:430,y:78}, E:{x:700,y:150}
+};
+const START={x:40,y:150}, END={x:840,y:150};
+const NW=118, NH=62;
+
+function render(){
+  const sch = computeSchedule();
+  const loads = computeLoads();
+  renderNetwork('netSvg', sch, loads);
+  renderNetwork('netSvgAnim', sch, loads, sim?computeTokens():null);
+  renderGantt(sch);
+  renderBottle(loads);
+  renderMetrics(sch, loads);
+  renderTakeaway(sch, loads);
+  renderScatter(sch);
+  renderQueue();
+  updateGraphTitles();
+}
+
+function edge(x1,y1,x2,y2,mk){
+  return `<path d="M ${x1} ${y1} C ${(x1+x2)/2} ${y1}, ${(x1+x2)/2} ${y2}, ${x2} ${y2}"
+     fill="none" stroke="var(--grid)" stroke-width="2.5" marker-end="url(#${mk})"/>`;
+}
+function renderNetwork(svgId, sch, loads, tokens){
+  const svg=document.getElementById(svgId); if(!svg) return;
+  const mk='arrow-'+svgId;
+  let s=`<defs><marker id="${mk}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+     <path d="M0 0 L10 5 L0 10 z" fill="var(--grid)"/></marker></defs>`;
+  s+=edge(START.x+14,START.y, NODE_POS.A.x-NW/2, NODE_POS.A.y, mk);
+  const link=(a,b)=>edge(NODE_POS[a].x+NW/2,NODE_POS[a].y, NODE_POS[b].x-NW/2,NODE_POS[b].y, mk);
+  s+=link('A','B')+link('B','C')+link('A','D');
+  s+=edge(NODE_POS.C.x+NW/2,NODE_POS.C.y, NODE_POS.E.x-NW/2,NODE_POS.E.y, mk);
+  s+=edge(NODE_POS.D.x+NW/2,NODE_POS.D.y, NODE_POS.E.x-NW/2,NODE_POS.E.y, mk);
+  s+=edge(NODE_POS.E.x+NW/2,NODE_POS.E.y, END.x-14,END.y, mk);
+  s+=`<circle cx="${START.x}" cy="${START.y}" r="14" fill="var(--surface-alt)" stroke="var(--grid)" stroke-width="2"/>`;
+  s+=`<text x="${START.x}" y="${START.y+30}" text-anchor="middle" fill="var(--muted)" font-size="12">start</text>`;
+  s+=`<circle cx="${END.x}" cy="${END.y}" r="14" fill="var(--surface-alt)" stroke="var(--grid)" stroke-width="2"/>`;
+  s+=`<text x="${END.x}" y="${END.y+30}" text-anchor="middle" fill="var(--muted)" font-size="12">done</text>`;
+
+  IDS.forEach(id=>{
+    const p=NODE_POS[id], st=state[id], col=PEOPLE[st.person];
+    const isBottle=loads.bottlenecks.includes(st.person);
+    const x=p.x-NW/2, y=p.y-NH/2;
+    s+=`<rect x="${x}" y="${y}" width="${NW}" height="${NH}" rx="9" fill="${col}" stroke="${col}" stroke-width="2.5"/>`;
+    if(isBottle) s+=`<rect x="${x+2}" y="${y+2}" width="${NW-4}" height="${NH-4}" rx="7"
+        fill="none" stroke="var(--bottle)" stroke-width="3.5" stroke-dasharray="7 5"/>`;
+    s+=`<text x="${p.x}" y="${p.y-6}" text-anchor="middle" fill="#fff" font-size="17" font-weight="700" style="paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:2.5px;stroke-linejoin:round">${id}</text>`;
+    s+=`<text x="${p.x}" y="${p.y+13}" text-anchor="middle" fill="#fff" font-size="13" font-weight="600" style="paint-order:stroke;stroke:rgba(0,0,0,.3);stroke-width:2px;stroke-linejoin:round">${st.person}</text>`;
+    s+=`<text x="${p.x}" y="${p.y+27}" text-anchor="middle" fill="#fff" opacity="0.92" font-size="11.5" style="paint-order:stroke;stroke:rgba(0,0,0,.28);stroke-width:2px;stroke-linejoin:round">${fmt(st.dur)} hrs</text>`;
+  });
+  if(tokens){
+    const tStroke=document.body.classList.contains('light-mode')?'#0f172a':'#f8fafc';
+    IDS.forEach(id=>{
+      const p=NODE_POS[id], t=tokens[id]; if(!t) return; const x=p.x-NW/2;
+      (t.proc||[]).forEach((job,i)=>{ const n=t.proc.length; s+=shapeSVG(job.shape, p.x-(n-1)*11+i*22, p.y-NH/2-13, 8.5, job.color, tStroke, 1.6, true); });
+      const q=(t.queue||[]);
+      q.slice(0,6).forEach((job,i)=>{ s+=shapeSVG(job.shape, x-13-i*15, p.y, 6.5, job.color, tStroke, 1.3, true); });
+      if(q.length>6) s+=`<text x="${x-13-6*15-4}" y="${p.y+4}" text-anchor="end" fill="var(--muted)" font-size="11">+${q.length-6}</text>`;
+      (t.wait||[]).forEach((job,i)=>{ const n=t.wait.length; s+=shapeSVG(job.shape, p.x-(n-1)*10+i*20, p.y+NH/2+13, 7, job.color, tStroke, 1.3, true, 0.45); });
+    });
+  }
+  svg.innerHTML=s;
+}
+
+function renderGantt(sch){
+  const svg=document.getElementById('ganttSvg');
+  const W=520, padL=54, padR=18, padT=34, rowH=38, gap=6;
+  const H=padT + IDS.length*(rowH+gap) + 34;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const proj=sch.proj, plotW=W-padL-padR;
+  const xs=t=>padL + (t/proj)*plotW;
+  let s='';
+  const step = proj<=8?1:2;
+  for(let t=0;t<=proj+1e-6;t+=step){
+    const x=xs(t);
+    s+=`<line x1="${x}" y1="${padT-8}" x2="${x}" y2="${H-26}" stroke="var(--grid)" stroke-width="1" opacity="0.5"/>`;
+    s+=`<text x="${x}" y="${H-8}" text-anchor="middle" fill="var(--muted)" font-size="11">${fmt(t)}</text>`;
+  }
+  s+=`<text x="${padL+plotW/2}" y="${padT-16}" text-anchor="middle" fill="var(--muted)" font-size="11">time (hrs) →</text>`;
+  IDS.forEach((id,i)=>{
+    const st=state[id], col=PEOPLE[st.person], y=padT+i*(rowH+gap);
+    const x0=xs(sch.ES[id]), x1=xs(sch.EF[id]);
+    if(!sch.critical[id]){
+      const sx=xs(sch.LF[id]);
+      s+=`<rect x="${x1}" y="${y+7}" width="${Math.max(0,sx-x1)}" height="${rowH-14}" rx="4"
+          fill="${col}" opacity="0.16"/>`;
+      s+=`<line x1="${x1}" y1="${y+rowH/2}" x2="${sx}" y2="${y+rowH/2}" stroke="${col}" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>`;
+    }
+    s+=`<rect x="${x0}" y="${y+4}" width="${Math.max(2,x1-x0)}" height="${rowH-8}" rx="6" fill="${col}"/>`;
+    s+=`<text x="${(x0+x1)/2}" y="${y+rowH/2+5}" text-anchor="middle" fill="#0b1220" font-size="13" font-weight="700">${id}</text>`;
+    s+=`<text x="${padL-8}" y="${y+rowH/2+4}" text-anchor="end" fill="var(--muted)" font-size="12">${st.person}</text>`;
+  });
+  const xf=xs(proj);
+  s+=`<line x1="${xf}" y1="${padT-8}" x2="${xf}" y2="${H-26}" stroke="var(--crit)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  s+=`<text x="${xf-4}" y="${padT-16}" text-anchor="end" fill="var(--crit)" font-size="12" font-weight="700">TFT = ${fmt(proj)}h</text>`;
+  svg.innerHTML=s;
+}
+
+function renderBottle(loads){
+  const svg=document.getElementById('bottleSvg');
+  const names=Object.keys(PEOPLE);
+  const W=520, padL=44, padR=14, padT=26, padB=44;
+  const H=300; svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const plotH=H-padT-padB, plotW=W-padL-padR;
+  const ymax=Math.max(loads.maxLoad,1)*1.15;
+  const ys=v=>padT+plotH-(v/ymax)*plotH;
+  const colW=Math.min(70, plotW/names.length-14);
+  const gap=(plotW-names.length*colW)/(names.length+1);
+  let s='';
+  const step=ymax<=6?1:2;
+  for(let v=0;v<=ymax;v+=step){
+    const y=ys(v);
+    s+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--grid)" stroke-width="1" opacity="0.45"/>`;
+    s+=`<text x="${padL-6}" y="${y+4}" text-anchor="end" fill="var(--muted)" font-size="11">${v}</text>`;
+  }
+  s+=`<text x="${12}" y="${padT+plotH/2}" fill="var(--muted)" font-size="11" transform="rotate(-90 12 ${padT+plotH/2})" text-anchor="middle">workload (hrs) ↑</text>`;
+  const capY=ys(loads.maxLoad);
+  s+=`<line x1="${padL}" y1="${capY}" x2="${W-padR}" y2="${capY}" stroke="var(--bottle)" stroke-width="2" stroke-dasharray="6 4"/>`;
+  s+=`<text x="${W-padR}" y="${capY-6}" text-anchor="end" fill="var(--bottle)" font-size="11.5" font-weight="700">bottleneck load = ${fmt(loads.maxLoad)}h</text>`;
+
+  names.forEach((name,i)=>{
+    const cx=padL+gap+i*(colW+gap);
+    const acts=IDS.filter(id=>state[id].person===name);
+    const isBottle=loads.bottlenecks.includes(name);
+    let acc=0;
+    acts.forEach(id=>{
+      const h=(state[id].dur/ymax)*plotH;
+      const y=ys(acc)-h;
+      s+=`<rect x="${cx}" y="${y}" width="${colW}" height="${h}" rx="4" fill="${PEOPLE[name]}"
+          stroke="var(--surface)" stroke-width="1.5"/>`;
+      s+=`<text x="${cx+colW/2}" y="${y+h/2+5}" text-anchor="middle" fill="#0b1220" font-size="12" font-weight="700">${id}</text>`;
+      acc+=state[id].dur;
+    });
+    if(isBottle){
+      const topY=ys(acc);
+      s+=`<rect x="${cx-3}" y="${topY-3}" width="${colW+6}" height="${ys(0)-topY+6}" rx="6"
+          fill="none" stroke="var(--bottle)" stroke-width="3" stroke-dasharray="7 5"/>`;
+    }
+    s+=`<text x="${cx+colW/2}" y="${H-26}" text-anchor="middle" fill="${isBottle?'var(--bottle)':'var(--ink)'}" font-size="12.5" font-weight="${isBottle?700:500}">${name}</text>`;
+    s+=`<text x="${cx+colW/2}" y="${H-11}" text-anchor="middle" fill="var(--muted)" font-size="11">${acc>0?fmt(acc)+'h':'—'}</text>`;
+  });
+  svg.innerHTML=s;
+}
+
+function renderMetrics(sch, loads){
+  const critList=IDS.filter(i=>sch.critical[i]).join('–');
+  document.getElementById('tftVal').innerHTML =
+    `${fmt(sch.proj)} hrs<small>Theoretical Flow Time · critical path = <b>${critList}</b></small>`;
+  const cap=1/loads.maxLoad;
+  document.getElementById('capVal').innerHTML =
+    `${fmt(cap)} <span style="font-size:1.1rem">jobs/hr</span><small>Capacity · one job every ${fmt(loads.maxLoad)} hrs</small>`;
+}
+
+function renderTakeaway(sch, loads){
+  const bottleActs = IDS.filter(id=>loads.bottlenecks.includes(state[id].person));
+  const bottleOnCrit = bottleActs.filter(id=>sch.critical[id]);
+  const names=[...new Set(bottleActs.map(id=>state[id].person))];
+  const nameStr=names.join(' & ');
+  const actStr=bottleActs.join(', ');
+  let verdict;
+  if(bottleOnCrit.length===0){
+    verdict=`The bottleneck is <span class="hl-bottle">${nameStr}</span> (activity ${actStr}), which is <b>not</b> on the critical path.
+      → Speeding up ${nameStr} <b>won't make a single order faster</b> (TFT stays the same), but it <b>is</b> what caps throughput.
+      Conversely, shortening a critical-path activity cuts TFT but doesn't raise capacity. <b>Two different questions, two different answers.</b>`;
+  } else if(bottleOnCrit.length===bottleActs.length){
+    verdict=`Here the bottleneck <span class="hl-bottle">${nameStr}</span> (activity ${actStr}) <b>sits on the critical path</b>.
+      In this case—and only in this case—improving that resource can help <b>both</b> responsiveness and capacity. But that's a coincidence of this setup, not a rule.`;
+  } else {
+    verdict=`The bottleneck <span class="hl-bottle">${nameStr}</span> covers ${actStr}; part of that work (${bottleOnCrit.join(', ')}) is on the critical path and part isn't. The two metrics only <b>partly</b> overlap.`;
+  }
+  document.getElementById('takeaway').innerHTML =
+    `<b>Bottleneck ≠ critical path.</b> ${verdict}`;
+}
+
+function fmt(x){ return Number.isInteger(x)?String(x):(Math.round(x*100)/100).toString(); }
+
+/* ---------- live-graph titles & legend ---------- */
+function graphSubtitle(){
+  const cap=1/computeLoads().maxLoad, util=DEMAND/cap;
+  return `arrivals <b>${fmt(round2(DEMAND))}</b> jobs/h &nbsp;·&nbsp; capacity <b>${fmt(round2(cap))}</b> jobs/h &nbsp;—&nbsp; ${util<=1.0001?'demand below capacity':'demand above capacity'}`;
+}
+function updateGraphTitles(){
+  const t=graphSubtitle();
+  const a=document.getElementById('scatterSub'), b=document.getElementById('queueSub');
+  if(a) a.innerHTML=t; if(b) b.innerHTML=t;
+}
+function buildQueueLegend(){
+  const el=document.getElementById('queueLegend'); if(!el) return;
+  el.innerHTML=Object.keys(PEOPLE).map(n=>
+    `<span class="key"><span style="display:inline-block;width:18px;height:3px;border-radius:2px;background:${PEOPLE[n]}"></span> ${n}</span>`).join('');
+}
+
+/* ---------- page selector ---------- */
+function showPage(n){
+  const b1=document.getElementById('pageBody1'), b2=document.getElementById('pageBody2');
+  if(b1) b1.hidden = n!==1;
+  if(b2) b2.hidden = n!==2;
+  document.getElementById('tab1').classList.toggle('active', n===1);
+  document.getElementById('tab2').classList.toggle('active', n===2);
+  if(sim) renderSim(); else render();
+}
+
+/* ---------- live graph 1: time in system vs. arrival time ---------- */
+function renderScatter(sch){
+  const svg=document.getElementById('scatterSvg'); if(!svg) return;
+  sch=sch||computeSchedule(); const proj=sch.proj;
+  const W=520,H=320,padL=48,padR=16,padT=16,padB=42, plotW=W-padL-padR, plotH=H-padT-padB;
+  const log=sim?sim.completedLog:[], now=sim?sim.now:0;
+  const arr=log.map(d=>d.arrival), tis=log.map(d=>d.tis);
+  const xmax=Math.max(10, Math.ceil(Math.max(now, proj, ...arr, 0)));
+  const ymax=Math.max(Math.ceil(proj*1.6), Math.ceil(Math.max(proj, ...tis, 0)*1.12));
+  const xs=a=>padL+(Math.min(a,xmax)/xmax)*plotW, ys=v=>padT+plotH-(Math.min(v,ymax)/ymax)*plotH;
+  const tStroke=document.body.classList.contains('light-mode')?'#0f172a':'#f8fafc';
+  let s='';
+  s+=`<rect x="${padL}" y="${ys(proj)}" width="${plotW}" height="${(padT+plotH)-ys(proj)}" fill="var(--muted)" opacity="0.07"/>`;
+  const ystep=ymax<=12?2:(ymax<=24?4:6);
+  for(let v=0;v<=ymax+1e-6;v+=ystep){ const y=ys(v); s+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--grid)" stroke-width="1" opacity="0.4"/>`; s+=`<text x="${padL-6}" y="${y+4}" text-anchor="end" fill="var(--muted)" font-size="11">${v}</text>`; }
+  const xstep=xmax<=12?2:(xmax<=24?4:(xmax<=48?8:12));
+  for(let t=0;t<=xmax+1e-6;t+=xstep){ const x=xs(t); s+=`<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT+plotH}" stroke="var(--grid)" stroke-width="1" opacity="0.22"/>`; s+=`<text x="${x}" y="${padT+plotH+16}" text-anchor="middle" fill="var(--muted)" font-size="11">${t}</text>`; }
+  s+=`<text x="${padL+plotW/2}" y="${H-5}" text-anchor="middle" fill="var(--muted)" font-size="11">arrival time (hrs) →</text>`;
+  s+=`<text x="13" y="${padT+plotH/2}" transform="rotate(-90 13 ${padT+plotH/2})" text-anchor="middle" fill="var(--muted)" font-size="11">time in system (hrs) ↑</text>`;
+  const yl=ys(proj);
+  s+=`<line x1="${padL}" y1="${yl}" x2="${W-padR}" y2="${yl}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 4"/>`;
+  s+=`<text x="${W-padR-2}" y="${yl-6}" text-anchor="end" fill="#94a3b8" font-size="11.5" font-weight="700">TFT = ${fmt(proj)}h (fastest possible)</text>`;
+  log.forEach(d=>{ s+=shapeSVG(d.shape, xs(d.arrival), ys(d.tis), 7, d.color, tStroke, 1.4, true); });
+  if(!log.length) s+=`<text x="${padL+plotW/2}" y="${padT+plotH/2}" text-anchor="middle" fill="var(--muted)" font-size="13">Press ▶︎ Play — each finished job lands here as its own shape.</text>`;
+  svg.innerHTML=s;
+}
+
+/* ---------- live graph 2: jobs waiting per resource over time ---------- */
+function renderQueue(){
+  const svg=document.getElementById('queueSvg'); if(!svg) return;
+  const names=Object.keys(PEOPLE);
+  const W=520,H=320,padL=44,padR=14,padT=16,padB=40, plotW=W-padL-padR, plotH=H-padT-padB;
+  const samples=sim?sim.samples:[], now=sim?sim.now:0;
+  const tmax=Math.max(10, Math.ceil(now));
+  let qm=1; samples.forEach(sm=>names.forEach(n=>{ if(sm.q[n]>qm) qm=sm.q[n]; }));
+  const qmax=Math.max(4, Math.ceil(qm*1.15));
+  const xs=t=>padL+(Math.min(t,tmax)/tmax)*plotW, ys=v=>padT+plotH-(Math.min(v,qmax)/qmax)*plotH;
+  let s='';
+  const ystep=qmax<=6?1:(qmax<=12?2:(qmax<=24?4:6));
+  for(let v=0;v<=qmax+1e-6;v+=ystep){ const y=ys(v); s+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--grid)" stroke-width="1" opacity="0.4"/>`; s+=`<text x="${padL-6}" y="${y+4}" text-anchor="end" fill="var(--muted)" font-size="11">${v}</text>`; }
+  const xstep=tmax<=12?2:(tmax<=24?4:(tmax<=48?8:12));
+  for(let t=0;t<=tmax+1e-6;t+=xstep){ const x=xs(t); s+=`<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT+plotH}" stroke="var(--grid)" stroke-width="1" opacity="0.22"/>`; s+=`<text x="${x}" y="${padT+plotH+16}" text-anchor="middle" fill="var(--muted)" font-size="11">${t}</text>`; }
+  s+=`<text x="${padL+plotW/2}" y="${H-5}" text-anchor="middle" fill="var(--muted)" font-size="11">time (hrs) →</text>`;
+  s+=`<text x="12" y="${padT+plotH/2}" transform="rotate(-90 12 ${padT+plotH/2})" text-anchor="middle" fill="var(--muted)" font-size="11">jobs waiting ↑</text>`;
+  if(samples.length>=2){
+    const stepN=Math.max(1,Math.ceil(samples.length/400));
+    names.forEach(n=>{
+      let pts='';
+      for(let i=0;i<samples.length;i+=stepN){ pts+=`${xs(samples[i].t).toFixed(1)},${ys(samples[i].q[n]).toFixed(1)} `; }
+      const last=samples[samples.length-1]; pts+=`${xs(last.t).toFixed(1)},${ys(last.q[n]).toFixed(1)}`;
+      s+=`<polyline points="${pts.trim()}" fill="none" stroke="${PEOPLE[n]}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+    });
+  } else {
+    s+=`<text x="${padL+plotW/2}" y="${padT+plotH/2}" text-anchor="middle" fill="var(--muted)" font-size="13">Press ▶︎ Play — one line per resource builds over time.</text>`;
+  }
+  svg.innerHTML=s;
+}
+
+/* ================= SIMULATION ================= */
+const SUCC={}; IDS.forEach(i=>SUCC[i]=[]); IDS.forEach(i=>PRED[i].forEach(p=>SUCC[p].push(i)));
+const SHAPES=['circle','square','triangle','diamond','star','pentagon','hexagon','plus'];
+const JOBPAL=['#22d3ee','#fb7185','#fbbf24','#4ade80','#a78bfa','#fb923c','#38bdf8','#e879f9'];
+const CAP=60, SPEEDS={slow:1.5,med:5,fast:14}, SAMPLE=0.2;
+let DEMAND=0.25, SPEED=5, sim=null, rafId=null, lastT=null;
+
+/* --- shapes --- */
+function regPts(n,cx,cy,r){let o='';for(let i=0;i<n;i++){const t=-Math.PI/2+i*2*Math.PI/n;o+=`${(cx+r*Math.cos(t)).toFixed(1)},${(cy+r*Math.sin(t)).toFixed(1)} `;}return o.trim();}
+function starPts(cx,cy,r){let o='';for(let i=0;i<10;i++){const rr=(i%2)?r*0.46:r;const t=-Math.PI/2+i*Math.PI/5;o+=`${(cx+rr*Math.cos(t)).toFixed(1)},${(cy+rr*Math.sin(t)).toFixed(1)} `;}return o.trim();}
+function plusPts(cx,cy,r){const a=r*0.4,b=r;return [[cx-a,cy-b],[cx+a,cy-b],[cx+a,cy-a],[cx+b,cy-a],[cx+b,cy+a],[cx+a,cy+a],[cx+a,cy+b],[cx-a,cy+b],[cx-a,cy+a],[cx-b,cy+a],[cx-b,cy-a],[cx-a,cy-a]].map(p=>p.map(v=>v.toFixed(1)).join(',')).join(' ');}
+function shapeSVG(type,cx,cy,r,fill,stroke,sw,halo,opacity){
+  const op=(opacity==null)?1:opacity;
+  const filt=halo?` style="filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.5))"`:'';
+  let inner;
+  if(type==='circle') inner=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+  else if(type==='square'){const a=r*1.7;inner=`<rect x="${cx-a/2}" y="${cy-a/2}" width="${a}" height="${a}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;}
+  else if(type==='plus') inner=`<polygon points="${plusPts(cx,cy,r)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+  else if(type==='star') inner=`<polygon points="${starPts(cx,cy,r)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+  else { const n={triangle:3,diamond:4,pentagon:5,hexagon:6}[type]||4; inner=`<polygon points="${regPts(n,cx,cy,r*1.05)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>`; }
+  return `<g opacity="${op}"${filt}>${inner}</g>`;
+}
+
+/* --- engine (discrete-event, person = single server) --- */
+function newSim(){ const persons={}; Object.keys(PEOPLE).forEach(n=>persons[n]={curJob:null,curAct:null,remaining:0,queue:[]});
+  return {now:0,nextArrival:0,interArrival:1/DEMAND,created:0,completed:0,jobs:[],persons,running:false,completedLog:[],samples:[],lastSample:-1}; }
+function simEnqueue(act,job){ job.started.add(act); sim.persons[state[act].person].queue.push({job,act}); }
+function simCreateJob(){ sim.created++; const idx=(sim.created-1)%SHAPES.length;
+  const job={id:sim.created,shape:SHAPES[idx],color:JOBPAL[idx],arrival:sim.now,done:new Set(),started:new Set()};
+  sim.jobs.push(job); simEnqueue('A',job); }
+function simFinish(pr){ const job=pr.curJob, act=pr.curAct; job.done.add(act); pr.curJob=null; pr.curAct=null; pr.remaining=0;
+  SUCC[act].forEach(s=>{ if(!job.started.has(s) && PRED[s].every(p=>job.done.has(p))) simEnqueue(s,job); });
+  if(IDS.every(a=>job.done.has(a))){ sim.completed++;
+    sim.completedLog.push({arrival:job.arrival, tis:sim.now-job.arrival, shape:job.shape, color:job.color});
+    const i=sim.jobs.indexOf(job); if(i>=0) sim.jobs.splice(i,1); } }
+function simStep(dt){
+  sim.now+=dt;
+  while(sim.created<CAP && sim.now>=sim.nextArrival){ simCreateJob(); sim.nextArrival+=sim.interArrival; }
+  Object.values(sim.persons).forEach(pr=>{ if(pr.curJob){ pr.remaining-=dt; if(pr.remaining<=1e-9) simFinish(pr); } });
+  Object.values(sim.persons).forEach(pr=>{ if(!pr.curJob && pr.queue.length){ const it=pr.queue.shift(); pr.curJob=it.job; pr.curAct=it.act; pr.remaining=state[it.act].dur; } });
+}
+function sampleQueues(){
+  if(sim.lastSample<0 || sim.now-sim.lastSample>=SAMPLE){
+    const q={}; Object.keys(PEOPLE).forEach(n=>q[n]=sim.persons[n].queue.length);
+    sim.samples.push({t:sim.now,q}); sim.lastSample=sim.now;
+  }
+}
+function computeTokens(){
+  const T={}; IDS.forEach(id=>T[id]={proc:[],queue:[],wait:[]});
+  Object.values(sim.persons).forEach(pr=>{ if(pr.curJob) T[pr.curAct].proc.push(pr.curJob); pr.queue.forEach(it=>T[it.act].queue.push(it.job)); });
+  const active=new Set(); Object.values(sim.persons).forEach(pr=>{ if(pr.curJob) active.add(pr.curJob.id); pr.queue.forEach(it=>active.add(it.job.id)); });
+  sim.jobs.forEach(job=>{ if(!active.has(job.id)){ const wn=IDS.find(a=>!job.done.has(a)); if(wn) T[wn].wait.push(job); } });
+  return T;
+}
+
+/* --- controls --- */
+function togglePlay(){ if(!sim) sim=newSim(); sim.running=!sim.running;
+  document.getElementById('playBtn').textContent=sim.running?'⏸ Pause':'▶︎ Play';
+  if(sim.running){ lastT=null; rafId=requestAnimationFrame(frame); } }
+function resetSim(){ if(rafId) cancelAnimationFrame(rafId); rafId=null; sim=null; lastT=null;
+  const pb=document.getElementById('playBtn'); if(pb) pb.textContent='▶︎ Play';
+  render(); updateStatsEmpty(); refreshDemandReadout(); }
+function frame(ts){ if(!sim||!sim.running) return;
+  if(lastT==null) lastT=ts; let real=(ts-lastT)/1000; lastT=ts; if(real>0.1) real=0.1;
+  let dt=real*SPEED; while(dt>1e-9){ const d=Math.min(0.05,dt); simStep(d); sampleQueues(); dt-=d; }
+  renderSim(); rafId=requestAnimationFrame(frame); }
+function onDemand(v){ DEMAND=parseFloat(v); refreshDemandReadout(); if(sim) sim.interArrival=1/DEMAND; }
+function setDemandRel(f){ const cap=1/computeLoads().maxLoad; DEMAND=Math.min(1,Math.max(0.125,+(f*cap).toFixed(3)));
+  document.getElementById('demand').value=DEMAND; refreshDemandReadout(); if(sim) sim.interArrival=1/DEMAND; }
+function setSpeed(k,btn){ SPEED=SPEEDS[k]; [...document.querySelectorAll('#speedBtns button')].forEach(b=>b.classList.toggle('active',b===btn)); }
+function refreshDemandReadout(){ const cap=1/computeLoads().maxLoad, util=DEMAND/cap;
+  const dv=document.getElementById('demVal'); if(dv) dv.textContent=`${DEMAND.toFixed(3)} jobs/hr · 1 every ${fmt(round1(1/DEMAND))} h`;
+  const u=document.getElementById('utilVal'); if(u){ u.innerHTML=`Demand is <b>${(util*100).toFixed(0)}%</b> of capacity (${fmt(round2(cap))} jobs/hr) — ${util<=1.0001?'stable ✅':'demand &gt; capacity ⚠️'}`; u.style.color=util<=1.0001?'var(--success)':'var(--bottle)'; }
+  updateGraphTitles(); }
+
+/* --- sim rendering --- */
+function renderSim(){ const sch=computeSchedule(), loads=computeLoads();
+  renderNetwork('netSvgAnim',sch,loads,computeTokens());
+  renderScatter(sch); renderQueue(); updateStats(); updateGraphTitles(); }
+function updateStats(){ set('stTime',fmt(round1(sim.now))+' h'); set('stInSys',sim.jobs.length); set('stDone',sim.completed); set('stThru', sim.now>0.05?(sim.completed/sim.now).toFixed(2)+' /h':'—'); }
+function updateStatsEmpty(){ set('stTime','0 h'); set('stInSys','0'); set('stDone','0'); set('stThru','—'); }
+function set(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; }
+function round1(x){return Math.round(x*10)/10;} function round2(x){return Math.round(x*100)/100;}
+
+/* theme toggle */
+const tt=document.getElementById('themeToggle');
+tt.addEventListener('click',()=>{
+  const light=document.body.classList.toggle('light-mode');
+  tt.textContent=light?'🌙 Dark Mode':'☀️ Light Mode';
+  tt.setAttribute('aria-pressed',light);
+  render();
+  if(sim) renderSim();
+});
+
+loadScenario(1);
+</script>
+</body>
+</html>
