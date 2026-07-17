@@ -28,6 +28,6 @@ time management, and supply chain management.
 
 <a href="/teaching/OPNS430/southpark_tft_capacity.html" target="_blank" rel="noopener">Southpark example: TFT and capacity</a>
 
-<a href="https://daniela-hl.github.io/queue-sim/" target="_blank" rel="noopener">Queueing simulator and computations tool</a>
+<a href="https://daniela-hl.github.io/queue-sim/" target="_blank" rel="noopener">Queueing simulator and calculator</a>
 
 <a href="/teaching/website-load-time-experiment" target="_blank" rel="noopener">Website load time experiment</a>
