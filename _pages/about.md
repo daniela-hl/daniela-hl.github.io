@@ -8,6 +8,10 @@ redirect_from:
   - /about.html
 ---
 
+Here's my <a href="/files/CV.pdf" target="_blank" rel="noopener">CV</a> (updated on July 2026).
+
+You can also find me on my <a href="https://www.kellogg.northwestern.edu/academics-research/faculty/lange_daniela/" target="_blank" rel="noopener">Kellogg faculty page</a>.
+
 ## News and highlights
 
 - With my coauthors <a href="https://sites.google.com/view/sushil-varma/home" target="_blank" rel="noopener">Sushil Mahavir Varma</a>, <a href="https://sites.google.com/view/prakirtjhunjhunwala" target="_blank" rel="noopener">Prakirt Jhunjhunwala</a>, and <a href="https://sites.google.com/site/sivatheja/" target="_blank" rel="noopener">Siva Theja Maguluri</a>, our tutorial "Transform Method for Stochastic Processing and Matching Networks" was accepted for the 2026 INFORMS TutORials in Operations Research. A companion paper will appear in the <i>Tutorials in Operations Research</i> series.
