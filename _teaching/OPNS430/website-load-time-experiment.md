@@ -9,13 +9,13 @@ hidden: true
 
 ## Experiment Description
 
-Jacqueline recently completed several MBA courses and is implementing Lean management tools at the Pizza Pazza Takeout Facility. As part of her initiative, she developed a real-time operations dashboard to monitor throughput, WIP, lead time, OTIF, and quality-at-source issues:
+Jacqueline recently completed several MBA courses and is implementing Lean management tools at the Pizza Pazza Takeout Facility. As part of her initiative, she developed a real-time operations dashboard to monitor the facility's performance:
 
  <a href="/teaching/OPNS430/lean-dashboard.html" target="_blank" rel="noopener">View dashboard</a>
 
-Jean agrees with the operational metrics but is concerned about system responsiveness. During peak hours, managers need real-time visibility, and even small delays may reduce usability.
+Jean agrees with the operational metrics but is concerned about the dashboard responsiveness. During peak hours, they need real-time visibility, so even small delays can reduce the usability of the dashboard.
 
-Jacqueline therefore launched an updated version of the dashboard, claiming it improves load performance:
+Jacqueline therefore launched an improved version of the dashboard, claiming it reduces the load time considerably:
 
 <a href="/teaching/OPNS430/lean-dashboard-improved.html" target="_blank" rel="noopener">View improved version</a>
 
@@ -23,7 +23,7 @@ Jacqueline therefore launched an updated version of the dashboard, claiming it i
 
 You are acting as an operations consultant to Pizza Pazza.
 
-Your objective is to determine whether the “improved” dashboard meaningfully reduces page load time.
+Your goal is to determine whether the “improved” dashboard indeed reduces the webpage load time.
 
 To conduct your analysis, you may use the following measurement tool:
 
