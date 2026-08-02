@@ -36,7 +36,9 @@ layout: default
         
         {% if page.collection == 'teaching' %}
           {% assign teaching_period = page.teaching_period | default: page.period %}
+          {% if page.type or page.venue or teaching_period or page.date %}
           <p> {{ page.type }}, <i>{{ page.venue }}</i>{% if teaching_period %}, {{ teaching_period }}{% elsif page.date %}, {{ page.date | default: "1900-01-01" | date: "%Y" }}{% endif %} </p>
+          {% endif %}
         {% elsif page.venue and page.date %}
           <p>Published in <i>{{ page.venue }}</i>, {{ page.date | default: "1900-01-01" | date: "%Y" }} </p>
         {% elsif page.date %}
