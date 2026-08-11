@@ -284,7 +284,10 @@ The Frosted Tips&#9;15
   const KEY = "cupcakeOps.v1";
 
   // ---------- State ----------
-  let S = null; // {teams:[{name,Q,cum,hist:[]}], day, days, mode, sell, cost, salv, ledger:[{d, per:[{profit,sold,left}]}]}
+  let S = null; // {teams:[{id,name,Q,cum,hist:[]}], day, days, mode, sell, cost, salv, ledger:[{d, per:[{profit,sold,left}]}]}
+  // Unique internal id per team so identical team names (e.g. two "Cupcake" teams) never collide.
+  let uid = 0;
+  const nextId = () => "t" + (++uid);
 
   const SAMPLE = [
     {name:"Sprinkle Squad", Q:13},
@@ -410,7 +413,7 @@ The Frosted Tips&#9;15
       if(!name && isNaN(q)) continue;
       if(!name){ alert("A team is missing a name."); return; }
       if(isNaN(q)||q<0){ alert(`Enter a valid daily Q for "${name}".`); return; }
-      teams.push({name, Q:q, cum:0, hist:[]});
+      teams.push({id:nextId(), name, Q:q, cum:0, hist:[]});
     }
     if(teams.length<2){ alert("Add at least two teams to play."); return; }
     S = {
@@ -518,7 +521,7 @@ The Frosted Tips&#9;15
 
   // ---------- Leaderboard render (FLIP-style absolute positioning) ----------
   function ordered(){ return [...S.teams].sort((a,b)=> b.cum-a.cum); }
-  function rankMap(){ const m={}; ordered().forEach((t,i)=>m[t.name]=i); return m; }
+  function rankMap(){ const m={}; ordered().forEach((t,i)=>m[t.id]=i); return m; }
 
   function renderBoard(init, D){
     const board=$("#board");
@@ -528,7 +531,7 @@ The Frosted Tips&#9;15
       board.innerHTML="";
       S.teams.forEach(t=>{
         const el=document.createElement("div");
-        el.className="team-row"; el.dataset.name=t.name;
+        el.className="team-row"; el.dataset.id=t.id;
         el.innerHTML=`<div class="rank"></div>
           <div class="team-id"><span class="name"></span><span class="q">(bakes ${t.Q}/day)</span></div>
           <div class="money"><div class="cum tnum">$0.00</div><div class="today tnum"></div></div>
@@ -541,7 +544,7 @@ The Frosted Tips&#9;15
     const RH=parseFloat(cs.getPropertyValue("--row-h"))||56, RG=parseFloat(cs.getPropertyValue("--row-gap"))||8;
     board.style.height = (ord.length*RH + (ord.length-1)*RG) + "px";
     ord.forEach((t,i)=>{
-      const el=board.querySelector(`.team-row[data-name="${cssEsc(t.name)}"]`);
+      const el=board.querySelector(`.team-row[data-id="${t.id}"]`);
       el.style.transform=`translateY(${i*(RH+RG)}px)`;
       el.classList.toggle("leader", i===0 && S.day>0);
       const medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1);
@@ -600,7 +603,7 @@ The Frosted Tips&#9;15
 
     // lead change
     const newLeader=ord[0].name;
-    if(prevRank && prevRank[newLeader]!==0){
+    if(prevRank && prevRank[ord[0].id]!==0){
       lines.push(pick([`👑 New leader! <b>${newLeader}</b> muscles to the top of the board.`,
         `Shake-up at the top — <b>${newLeader}</b> takes the lead!`]));
     }
@@ -716,6 +719,8 @@ The Frosted Tips&#9;15
   const saved=load();
   if(saved && saved.teams && saved.teams.length){
     S=saved;
+    // Back-compat: games saved before unique ids existed — assign ids so duplicate names don't collide.
+    S.teams.forEach(t=>{ if(t.id==null) t.id=nextId(); });
     toGame();
     if(S.day>0){ const e=S.ledger[S.ledger.length-1];
       $("#demandNow").innerHTML = e ? (e.D + (e.dice?` <small>(${e.dice.join(" + ")})</small>`:"")) : "—"; }
