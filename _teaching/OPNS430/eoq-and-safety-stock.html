@@ -1,0 +1,1345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>F&amp;R Stockroom — Inventory, Lead Time &amp; Safety Stock</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* Palette matched to the Module 5 slides: Kellogg purple + the cyan of the normal-curve fill. */
+  :root{
+    color-scheme: light;
+    --bg:#F6F3FB; --card:#FFFFFF; --card-2:#F4EFFA;
+    --ink:#2B1B3D; --ink-soft:#77698C; --line:#E5DCF1;
+    --purple:#4E2A84; --purple-deep:#341B5C; --purple-lt:#8E6FBF;
+    --cyan:#1FA9BD; --cyan-lt:#B7EAF1; --cyan-fill:rgba(31,169,189,.22);
+    --amber:#E0952F; --amber-lt:rgba(224,149,47,.16);
+    --red:#D6455C; --red-lt:rgba(214,69,92,.18);
+    --green:#2E9E6B;
+    --cool:#3E7FC1; --hot:#E2553C;
+    --shadow:0 6px 22px rgba(78,42,132,.10), 0 2px 6px rgba(78,42,132,.08);
+    --shadow-lg:0 18px 50px rgba(78,42,132,.20);
+    --radius:16px;
+    --font-display:"Avenir Next","Futura","Trebuchet MS",system-ui,sans-serif;
+    --font-body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  html[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#171122; --card:#221733; --card-2:#2B1E40;
+    --ink:#F0EAF9; --ink-soft:#A996C2; --line:#3A2A55;
+    --purple:#B79AE8; --purple-deep:#8E6FBF; --purple-lt:#6E4FA0;
+    --cyan:#57D2E3; --cyan-lt:#1E4A55; --cyan-fill:rgba(87,210,227,.20);
+    --amber:#F0B65C; --amber-lt:rgba(240,182,92,.14);
+    --red:#F0798D; --red-lt:rgba(240,121,141,.18);
+    --green:#5FCF9A;
+    --cool:#6FA8E0; --hot:#F07C64;
+    --shadow:0 6px 22px rgba(0,0,0,.35);
+    --shadow-lg:0 18px 50px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.5;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1440px;margin:0 auto;padding:18px 18px 70px}
+  h1,h2,h3{font-family:var(--font-display);margin:0;line-height:1.15}
+  button{font-family:var(--font-display);cursor:pointer;border:none;font-size:14px}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* ---------- header ---------- */
+  header.marquee{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    background:linear-gradient(135deg,var(--purple),var(--purple-deep));
+    color:#fff;border-radius:var(--radius);padding:15px 20px;box-shadow:var(--shadow-lg);
+    position:relative;overflow:hidden}
+  header.marquee::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(90deg,transparent 0 34px,rgba(255,255,255,.045) 34px 68px)}
+  .logo{font-size:32px;line-height:1;z-index:1}
+  .title-block{flex:1;min-width:220px;z-index:1}
+  .title-block h1{font-size:clamp(20px,3vw,28px);font-weight:800;letter-spacing:.2px}
+  .title-block .sub{font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.85;font-weight:600;margin-top:3px}
+  .title-block .credit{font-size:11.5px;font-style:italic;opacity:.78;margin-top:7px;line-height:1.4;
+    max-width:82ch;font-weight:400}
+  .theme-btn{z-index:1;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.38);
+    color:#fff;border-radius:999px;width:38px;height:38px;font-size:16px;display:grid;place-items:center}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:16px 18px}
+  .card + .card{margin-top:14px}
+  .card h2{font-size:15px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--ink-soft)}
+  .card h2 .em{color:var(--purple);text-transform:none;letter-spacing:0;font-size:17px}
+
+  /* ---------- maths ---------- */
+  .m{font-family:"Latin Modern Math","STIX Two Math","Cambria Math","Times New Roman",Times,serif;
+    font-style:italic;font-size:1.09em;white-space:nowrap;letter-spacing:.15px;text-transform:none}
+  .m sub{font-style:normal;font-size:.66em;vertical-align:-.3em;letter-spacing:0;margin-left:.02em}
+  .m sup{font-style:normal;font-size:.66em}
+  .m .u{font-style:normal}                       /* upright: digits, operators, NORM.DIST … */
+  .m .rad{font-style:normal;margin-right:.05em}
+  .m .rad>span{border-top:1.1px solid currentColor;padding:.06em .14em 0;font-style:italic;
+    display:inline-block;margin-left:-.04em}
+  .m .fr{display:inline-flex;flex-direction:column;vertical-align:-.55em;text-align:center;
+    font-size:.86em;line-height:1.12;margin:0 .12em}
+  .m .fr>span:first-child{border-bottom:1.1px solid currentColor;padding:0 .18em}
+
+  /* ---------- on / off switches ---------- */
+  .switches{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;margin-top:12px}
+  .switch{display:flex;align-items:center;gap:13px;padding:13px 16px;border-radius:14px;text-align:left;
+    border:2px solid var(--line);background:var(--card-2);color:var(--ink);
+    transition:border-color .18s,background .18s}
+  .switch:hover{border-color:var(--purple-lt)}
+  .switch .track{flex:none;width:46px;height:26px;border-radius:999px;background:var(--line);
+    position:relative;transition:background .2s}
+  .switch .knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.32);transition:transform .2s}
+  .switch.on .track{background:var(--purple)}
+  .switch.on .knob{transform:translateX(20px)}
+  .switch.on{border-color:var(--purple);background:color-mix(in srgb,var(--purple) 10%,var(--card))}
+  .switch#swS.on .track{background:var(--amber)}
+  .switch#swS.on{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 13%,var(--card))}
+  .switch .txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.28}
+  .switch .txt .t{font-family:var(--font-display);font-weight:800;font-size:15px}
+  .switch .txt .d{font-size:11.5px;color:var(--ink-soft)}
+  .switch .st{flex:none;font-size:11px;font-weight:800;letter-spacing:1.3px;color:var(--ink-soft)}
+  .switch.on .st{color:var(--purple)}
+  .switch#swS.on .st{color:var(--amber)}
+
+  /* ---------- inputs ---------- */
+  .params{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:12px 16px;margin-top:12px}
+  .params.p4{grid-template-columns:repeat(auto-fit,minmax(196px,1fr))}
+  .params.p2{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+  .twin{display:grid;grid-template-columns:1fr auto 1fr;gap:9px;align-items:end}
+  .twin .link{padding-bottom:9px;font-size:17px;color:var(--purple);font-weight:800}
+  .fieldset.off{opacity:.5}
+  .f input:disabled{opacity:.55;cursor:not-allowed}
+  .fieldset{border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;background:var(--card-2)}
+  .fieldset > .lgd{font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;
+    color:var(--purple);margin-bottom:8px}
+  .f{margin-bottom:9px}
+  .f:last-child{margin-bottom:0}
+  .f label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px;
+    color:var(--ink-soft);font-weight:600;margin-bottom:3px}
+  .f label .sym{font-family:var(--font-mono);color:var(--purple);font-weight:700;font-size:12.5px}
+  .f .row{display:flex;align-items:center;gap:8px}
+  .f input[type=number]{width:94px;padding:7px 9px;border-radius:9px;border:2px solid var(--line);
+    background:var(--card);color:var(--ink);font-size:14.5px;font-family:var(--font-display);font-weight:700;
+    text-align:right;font-variant-numeric:tabular-nums}
+  .f input[type=number]:focus{outline:none;border-color:var(--purple)}
+  .f input[type=range]{flex:1;min-width:70px;accent-color:var(--purple)}
+  .f .unit{font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
+  .mini{padding:5px 10px;border-radius:8px;background:transparent;border:1.5px solid var(--line);
+    color:var(--ink-soft);font-size:11.5px;font-weight:700;white-space:nowrap}
+  .mini:hover{border-color:var(--purple);color:var(--purple)}
+  .dial{background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 14%,var(--card-2)),var(--card-2));
+    border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+  .dial > .lgd{color:var(--amber)}
+  .dial input[type=range]{accent-color:var(--amber)}
+  select{padding:5px 7px;border-radius:8px;border:1.5px solid var(--line);background:var(--card);
+    color:var(--ink);font-size:12px;font-weight:700;font-family:var(--font-display)}
+
+  /* ---------- main grid ---------- */
+  .main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px;margin-top:14px;align-items:start}
+  @media (max-width:1100px){.main{grid-template-columns:1fr}}
+
+  .chart-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+  .store{display:flex;align-items:center;gap:10px;background:var(--card-2);border:1.5px solid var(--line);
+    border-radius:12px;padding:6px 12px 6px 10px;min-height:52px}
+  .store .shop{font-size:22px;line-height:1}
+  .store .meta{display:flex;flex-direction:column;line-height:1.15}
+  .store .meta .k{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-soft);font-weight:700}
+  .store .meta .v{font-family:var(--font-display);font-weight:800;font-size:15px}
+  .store .meta .v b{font-size:19px;color:var(--purple)}
+  .people{display:flex;flex-wrap:wrap;gap:2.5px;max-width:250px;align-content:center}
+  .p{width:6px;height:13px;position:relative;border-radius:3px 3px 1px 1px;background:var(--purple-lt);opacity:.95;
+    animation:popIn .18s ease-out}
+  .p::before{content:"";position:absolute;top:-5px;left:0.5px;width:5px;height:5px;border-radius:50%;background:inherit}
+  @keyframes popIn{from{transform:translateY(4px) scale(.6);opacity:0}to{transform:none;opacity:.95}}
+  .tag{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 7px;border-radius:999px}
+  .tag.busy{background:var(--red-lt);color:var(--hot)}
+  .tag.slow{background:rgba(62,127,193,.16);color:var(--cool)}
+  .tag.norm{background:var(--card-2);color:var(--ink-soft)}
+
+  canvas{display:block;width:100%;border-radius:10px}
+  #footfall{height:62px;margin-bottom:2px}
+  #chart{height:340px}
+  #dist{height:290px}
+
+  .runbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;
+    border-top:1px solid var(--line);padding-top:10px}
+  .btn{padding:9px 15px;border-radius:10px;font-weight:800;font-size:13.5px;transition:filter .15s,transform .08s;
+    box-shadow:0 2px 0 rgba(0,0,0,.10)}
+  .btn:active{transform:translateY(2px);box-shadow:none}
+  .btn-primary{background:linear-gradient(135deg,var(--purple),var(--purple-deep));color:#fff}
+  .btn-primary:hover{filter:brightness(1.1)}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:2px solid var(--line);box-shadow:none;padding:8px 13px}
+  .btn-ghost:hover{border-color:var(--purple);color:var(--purple)}
+  .runbar .sp{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-soft);font-weight:700}
+  .runbar .sp input{width:96px;accent-color:var(--purple)}
+  .spacer{flex:1}
+
+  /* ---------- distribution side ---------- */
+  .formula{margin-top:8px;background:var(--card-2);border:1px solid var(--line);border-radius:10px;
+    padding:9px 11px;font-family:var(--font-mono);font-size:11.5px;line-height:1.7;overflow-wrap:anywhere}
+  .formula .lbl{color:var(--ink-soft);font-family:var(--font-display);font-weight:700;font-size:11px;
+    text-transform:uppercase;letter-spacing:1px;display:block;white-space:normal}
+  .formula b{color:var(--purple)}
+  .formula .res{color:var(--cyan);font-weight:700}
+  .dist-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--ink-soft)}
+  .dist-legend span{display:flex;align-items:center;gap:5px}
+  .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-soft);font-weight:600;cursor:pointer}
+  .chk input{accent-color:var(--purple)}
+
+  /* ---------- scoreboard ---------- */
+  .score{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-top:12px}
+  .tile{background:var(--card-2);border:1px solid var(--line);border-radius:12px;padding:9px 12px}
+  .tile .k{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--ink-soft);font-weight:800}
+  .tile .v{font-family:var(--font-display);font-weight:800;font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums}
+  .tile .s{font-size:11px;color:var(--ink-soft)}
+  .tile.hi .v{color:var(--purple)}
+  .tile.warn .v{color:var(--red)}
+  .tile.ok .v{color:var(--green)}
+
+  /* ---------- bottom grid ---------- */
+  .bottom{margin-top:14px}
+  table.t{width:100%;border-collapse:collapse;font-size:14px;margin-top:12px}
+  table.t th,table.t td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;
+    font-variant-numeric:tabular-nums}
+  table.t th:first-child,table.t td:first-child{text-align:left;white-space:normal}
+  table.t thead th{font-family:var(--font-display);color:var(--ink-soft);font-size:11px;text-transform:uppercase;
+    letter-spacing:.6px;font-weight:800;vertical-align:bottom}
+  table.t thead th .sub{display:block;font-weight:600;font-size:11px;text-transform:none;letter-spacing:0;margin-top:2px}
+  table.t tbody tr.total td{font-weight:800;border-top:2px solid var(--line);border-bottom:none;
+    color:var(--purple);font-size:16px}
+  table.t td.chg,table.t tbody tr.total td.chg{color:var(--red);font-weight:800}
+  table.t td.formula,table.t th.formula{text-align:left;white-space:nowrap;color:var(--ink-soft);
+    font-size:13.5px;border-left:1px solid var(--line);border-right:1px solid var(--line);padding-left:14px}
+  table.t th.formula{width:1%}
+  table.t .rowlbl{font-weight:700}
+  table.t col.here,table.t td.here,table.t th.here{background:color-mix(in srgb,var(--purple) 9%,transparent)}
+  table.t th.here{color:var(--purple)}
+  table.t .youare{display:block;font-size:9.5px;font-weight:800;letter-spacing:1.2px;color:var(--purple);
+    text-transform:uppercase;margin-top:3px}
+  .tbl-scroll{overflow-x:auto}
+  .lead{font-size:12.5px;color:var(--ink-soft);margin:6px 0 0}
+  .verdict{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--cyan-fill);
+    border:1px solid color-mix(in srgb,var(--cyan) 40%,transparent);font-size:13px;line-height:1.5}
+  .verdict b{color:var(--purple)}
+
+  details.help{margin-top:14px}
+  details.help summary{cursor:pointer;font-family:var(--font-display);font-weight:800;font-size:13.5px;
+    color:var(--purple);list-style:none}
+  details.help summary::-webkit-details-marker{display:none}
+  details.help summary::before{content:"▸ ";transition:transform .2s}
+  details.help[open] summary::before{content:"▾ "}
+  details.help ul{margin:8px 0 0;padding-left:20px;font-size:13px;color:var(--ink-soft);line-height:1.65}
+  details.help li{margin-bottom:5px}
+  details.help b{color:var(--ink)}
+  footer.note{margin-top:22px;text-align:center;font-size:11.5px;color:var(--ink-soft)}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.001s!important;transition-duration:.05s!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="marquee">
+    <div class="logo">🐕</div>
+    <div class="title-block">
+      <h1>F&amp;R Stockroom</h1>
+      <div class="sub">Cycle stock · Lead time · Safety stock under random demand</div>
+      <div class="credit">Designed by Daniela Hurtado-Lange, based on Fritz &amp; Roscoe case by
+        Martin Lariviere and Achal Bassamboo. Operations Department, Kellogg School of Management.</div>
+    </div>
+    <button class="theme-btn" id="themeBtn" title="Toggle dark mode">🌙</button>
+  </header>
+
+  <!-- ============ SWITCHES + PARAMS ============ -->
+  <section class="card">
+    <h2><span class="em">Fritz &amp; Roscoe’s Pet Food Store</span></h2>
+    <p class="lead">Turn both switches off for the perfect textbook sawtooth, then add one complication at a time.</p>
+
+    <div class="switches">
+      <button class="switch on" id="swL">
+        <span class="track"><span class="knob"></span></span>
+        <span class="txt">
+          <span class="t">Lead time</span>
+          <span class="d">the truck takes <span class="m">L</span> weeks to arrive</span>
+        </span>
+        <span class="st">ON</span>
+      </button>
+      <button class="switch on" id="swS">
+        <span class="track"><span class="knob"></span></span>
+        <span class="txt">
+          <span class="t">Randomness in demand</span>
+          <span class="d">weekly demand wobbles by <span class="m">σ<sub>R</sub></span></span>
+        </span>
+        <span class="st">ON</span>
+      </button>
+    </div>
+
+    <div class="params p4">
+      <div class="fieldset">
+        <div class="lgd">Costs</div>
+        <div class="f">
+          <label>Cost per order <span class="sym m">S</span></label>
+          <div class="row"><input type="number" id="inS" step="10" min="1"><span class="unit">$/truck</span></div>
+        </div>
+        <div class="f">
+          <label>Holding cost <span class="sym m">H</span></label>
+          <div class="row"><input type="number" id="inH" step="0.1" min="0.1"><span class="unit">$/bag·yr</span></div>
+        </div>
+      </div>
+
+      <div class="fieldset">
+        <div class="lgd">Demand</div>
+        <div class="f">
+          <label>Average weekly demand <span class="sym m">R</span></label>
+          <div class="row"><input type="number" id="inR" step="0.5" min="1" max="200">
+            <span class="unit">bags/wk<br><b id="rAnn"></b></span></div>
+        </div>
+      </div>
+
+      <div class="fieldset dial" id="fsSigma">
+        <div class="lgd">🎲 Randomness dial</div>
+        <div class="f">
+          <label>Std. dev. of weekly demand <span class="sym m">σ<sub>R</sub></span></label>
+          <div class="row"><input type="range" id="rgSigma" min="0" max="18" step="0.25">
+            <input type="number" id="inSigma" step="0.25" min="0" max="18"></div>
+          <div class="unit" id="sigmaHint"></div>
+        </div>
+      </div>
+
+      <div class="fieldset" id="fsL">
+        <div class="lgd">Lead time</div>
+        <div class="f">
+          <label>Order → delivery <span class="sym m">L</span></label>
+          <div class="row"><input type="range" id="rgL" min="0" max="8" step="0.5">
+            <input type="number" id="inL" step="0.5" min="0" max="8"></div>
+          <div class="unit" id="lHint">weeks</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="params p2">
+      <div class="fieldset">
+        <div class="lgd">Policy — how much to order?</div>
+        <div class="f">
+          <label>Order quantity <span class="sym m">Q</span></label>
+          <div class="row"><input type="number" id="inQ" step="1" min="1">
+            <button class="mini" id="btnEOQ">set to <span class="m">Q<sub><span class="u">EOQ</span></sub></span></button></div>
+          <div class="unit" id="eoqHint"></div>
+        </div>
+      </div>
+
+      <div class="fieldset">
+        <div class="lgd">Policy — when to order?</div>
+        <div class="twin">
+          <div class="f" style="margin-bottom:0">
+            <label>Reorder point <span class="sym m">ROP</span></label>
+            <div class="row"><input type="number" id="inROP" step="1" min="0"><span class="unit">bags</span></div>
+          </div>
+          <div class="link" title="change either one and the other follows">⇄</div>
+          <div class="f" style="margin-bottom:0">
+            <label>Service level <span class="sym m">CSL</span></label>
+            <div class="row"><input type="number" id="inCSL" step="1" min="0.1" max="99.9"><span class="unit">%</span></div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:9px"><input type="range" id="rgROP" min="0" max="120" step="1"></div>
+        <div class="unit" id="ropHint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+
+    <section class="card">
+      <div class="chart-head">
+        <h2><span class="em">Inventory over time</span></h2>
+        <div class="store">
+          <div class="shop">🏪</div>
+          <div class="meta">
+            <div class="k">Week <span id="wkNum">0</span> — customers so far</div>
+            <div class="v"><b id="wkCount">0</b> <span id="wkTag" class="tag norm">—</span></div>
+          </div>
+          <div class="people" id="people"></div>
+        </div>
+      </div>
+
+      <canvas id="footfall"></canvas>
+      <canvas id="chart"></canvas>
+
+      <div class="runbar">
+        <button class="btn btn-primary" id="btnPlay">▶︎ Play</button>
+        <button class="btn btn-ghost" id="btnReset">🔄 New demand</button>
+        <div class="sp">⚡ Speed <input type="range" id="rgSpeed" min="0" max="6" step="1" value="2"><span id="spdLbl" class="tnum">2 wk/s</span></div>
+        <div class="sp">🔍 Window <input type="range" id="rgWin" min="6" max="60" step="2" value="16"><span id="winLbl" class="tnum">16 wk</span></div>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" id="btnBatch">⏭ Run 300 cycles</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="em">Demand during the lead time</span></h2>
+      <canvas id="dist"></canvas>
+      <div class="dist-legend">
+        <span><i class="sw" style="background:var(--purple)"></i> theory: Normal(L·R, σ<sub>R</sub>√L)</span>
+        <span><i class="sw" style="background:var(--amber)"></i> what actually happened</span>
+        <span><i class="sw" style="background:var(--red)"></i> stock-out (demand &gt; ROP)</span>
+      </div>
+      <div class="formula" id="formulaBox"></div>
+      <label class="chk" style="margin-top:8px">
+        <input type="checkbox" id="chkMistake"> Show the common mistake:
+        <span class="m">σ<sub>R</sub> × L</span> instead of
+        <span class="m">σ<sub>R</sub> × <span class="rad">√<span>L</span></span></span>
+      </label>
+    </section>
+  </div>
+
+  <!-- ============ SCOREBOARD ============ -->
+  <section class="card">
+    <h2><span class="em">Scoreboard</span> — does the simulation agree with the formula?</h2>
+    <div class="score">
+      <div class="tile"><div class="k">Cycles run</div><div class="v tnum" id="stCycles">0</div><div class="s">order → delivery</div></div>
+      <div class="tile warn"><div class="k">Stock-outs</div><div class="v tnum" id="stSO">0</div><div class="s" id="stSOs">—</div></div>
+      <div class="tile hi"><div class="k">CSL simulated</div><div class="v tnum" id="stCSLe">—</div><div class="s" id="stCSLeS">what happened</div></div>
+      <div class="tile hi"><div class="k">CSL formula</div><div class="v tnum" id="stCSLt">—</div><div class="s">NORM.DIST</div></div>
+      <div class="tile ok"><div class="k">Fill rate</div><div class="v tnum" id="stFill">—</div><div class="s">% of bags served</div></div>
+      <div class="tile"><div class="k">Safety stock</div><div class="v tnum" id="stSS">—</div><div class="s"><span class="m">I<sub>s</sub> = ROP − L·R</span></div></div>
+    </div>
+    <p class="lead">Cycle service level counts <b>cycles without a stock-out</b>. Fill rate counts <b>bags served on time</b> — it is always the friendlier number, which is why the two are so easy to confuse.</p>
+  </section>
+
+  <!-- ============ COST TREE ============ -->
+  <div class="bottom">
+    <section class="card">
+      <h2><span class="em">What it costs</span> — the financial tree, per store per year</h2>
+      <div class="tbl-scroll"><table class="t" id="costTable"></table></div>
+      <p class="lead">Adding <b>lead time</b> costs nothing — we just order earlier, and the average inventory is unchanged. Adding <b>variability</b> costs real money, because the safety stock sits in the warehouse all year long.</p>
+    </section>
+  </div>
+
+  <details class="help">
+    <summary>How to read this</summary>
+    <ul>
+      <li><b>The people strip</b> above the chart is one mark per customer walking into the store. A week with more people makes the inventory line fall faster — the slope <i>is</i> the demand rate.</li>
+      <li><b>Each little step down</b> in the inventory line is one customer buying. Zoom in (small window) to see the steps; zoom out and they blur into the straight diagonal from the slides.</li>
+      <li><b>The amber band</b> is a lead time: the stretch between placing an order and the truck arriving. The only thing that decides a stock-out is how far inventory falls inside that band.</li>
+      <li><b>Every band produces one dot</b> on the right panel. That is where the bell curve comes from — it is not an assumption, it is the pile of realised lead-time demands.</li>
+      <li><b>The ROP line</b> is the cut. Everything to its right in the right panel is a stock-out. Drag ROP and watch the histogram stay exactly where it is while only the cut moves.</li>
+      <li>Turn the <b>randomness dial to 0</b> to get the perfect textbook sawtooth, then turn it up slowly.</li>
+    </ul>
+  </details>
+
+  <footer class="note">
+    OPNS 430 / OPNSM 430 — Operations Management · Prof. Daniela Hurtado-Lange · Kellogg School of Management
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* ==================== math ==================== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+function normCdf(z){ // Zelen & Severo 26.2.17
+  if(!isFinite(z)) return z>0?1:0;
+  const t=1/(1+0.2316419*Math.abs(z));
+  const d=0.3989422804014327*Math.exp(-z*z/2);
+  const p=d*t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));
+  return z>0?1-p:p;
+}
+function normPdf(z){return 0.3989422804014327*Math.exp(-z*z/2)}
+function normInv(p){ // Acklam
+  if(p<=0) return -8; if(p>=1) return 8;
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pl=0.02425; let q,r;
+  if(p<pl){q=Math.sqrt(-2*Math.log(p));
+    return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  if(p<=1-pl){q=p-0.5;r=q*q;
+    return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  q=Math.sqrt(-2*Math.log(1-p));
+  return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt=(v,d=1)=>(!isFinite(v)?"—":v.toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d}));
+const money=v=>"$"+Math.round(v).toLocaleString();
+const pct=(v,d=1)=>(!isFinite(v)?"—":(100*v).toFixed(d)+"%");
+
+/* ==================== parameters ==================== */
+const P = {R:19.5, sigma:6.25, L:2, S:150, H:7.2, Q:205.55, ROP:51, csl:0.90};
+/* values the switches restore when flipped back on, and the columns of the cost tree */
+const memo = {L:2, sigma:6.25};
+const WEEKS_PER_YEAR = 52;
+const CUST_PER_AVG_WEEK = 20;   // sets how "grainy" the customer steps are
+
+const eoq   = ()=>Math.sqrt(2*P.S*P.R*WEEKS_PER_YEAR/P.H);
+const muL   = ()=>P.L*P.R;
+const sigL  = ()=>P.sigma*Math.sqrt(P.L);
+const cslTh = ()=>{const s=sigL(); return s<=0 ? (P.ROP>=muL()?1:0) : normCdf((P.ROP-muL())/s);};
+
+/* ==================== simulation engine ====================
+   Demand is a continuous-time process with independent increments: over any stretch of
+   length h it is Normal(R*h, sigma^2*h). That is the whole trick — it makes the demand
+   during ANY lead-time window exactly Normal(L*R, sigma_R*sqrt(L)), which is precisely the
+   formula taught in class, no matter where in the week the reorder happens.
+   Customers are the moments cumulative demand crosses another basket, so a busy stretch
+   produces more people and a steeper drop, and the drawn line is a clean staircase.       */
+const DT = 1/40;                 // simulation grid: 40 slices per week
+
+function makeSim(par, seed){
+  const rnd = mulberry32(seed);
+  let spare=null;
+  function gauss(){
+    if(spare!==null){const s=spare;spare=null;return s;}
+    let u=0,v=0; while(u===0)u=rnd(); while(v===0)v=rnd();
+    const m=Math.sqrt(-2*Math.log(u));
+    spare=m*Math.sin(2*Math.PI*v);
+    return m*Math.cos(2*Math.PI*v);
+  }
+
+  const S={
+    P:par, t:0, inv:par.Q, cumD:0, onOrder:0, out:null,
+    weekInfo:new Map(), kMax:0, drawInv:par.Q,
+    path:[{t:0,inv:par.Q}], arrivals:[], bands:[],
+    ltds:[], last:null, curWeek:0, curCount:0
+  };
+  const basket = ()=>Math.max(par.R,1e-6)/CUST_PER_AVG_WEEK;
+
+  function noteWeek(w,d,n){
+    let e=S.weekInfo.get(w);
+    if(!e){ e={D:0,n:0}; S.weekInfo.set(w,e); }
+    e.D+=d; e.n+=n;
+    if(S.weekInfo.size>700){ const k=S.weekInfo.keys().next().value; S.weekInfo.delete(k); }
+  }
+
+  /* apply a known quantity of demand spread over [tStart, tStart+h] */
+  function applyDemand(dW, tStart, h, rec){
+    const b=basket(), cum0=S.cumD;
+    S.cumD += dW;
+    S.inv = Math.max(0, S.inv - dW);
+
+    // customers = new basket crossings (kMax keeps the drawn staircase monotone)
+    let nc=0;
+    if(dW>0){
+      const k1=Math.floor(S.cumD/b), to=Math.min(k1, S.kMax+400);
+      for(let k=S.kMax+1;k<=to;k++){
+        const tc = tStart + clamp((k*b-cum0)/dW,0,1)*h;
+        S.drawInv = Math.max(0, S.drawInv - b);
+        if(rec){
+          S.path.push({t:tc,inv:S.drawInv+b});
+          S.path.push({t:tc,inv:S.drawInv});
+          S.arrivals.push(tc);
+        }
+        nc++;
+      }
+      if(k1>S.kMax) S.kMax=k1;
+    }
+    const w=Math.floor(tStart+1e-9);
+    if(w!==S.curWeek){ S.curWeek=w; S.curCount=0; }
+    S.curCount+=nc;
+    noteWeek(w,dW,nc);
+  }
+
+  /* Advance S.t by h. If the inventory position crosses the ROP inside this slice, the slice
+     is split exactly at the crossing and the leftover time is given a FRESH independent
+     increment. That restores the strong Markov property at the reorder instant, so the demand
+     over the following L weeks is exactly Normal(L*R, sigma_R*sqrt(L)) — the taught formula. */
+  function consume(h, rec){
+    if(h<=1e-12) return;
+    const t0=S.t;
+    const dW = par.R*h + (par.sigma>0 ? par.sigma*Math.sqrt(h)*gauss() : 0);
+    const ip0 = S.inv + S.onOrder;
+
+    if(!S.out && par.Q>0 && dW>0 && ip0>par.ROP && (ip0-dW)<=par.ROP){
+      const need=ip0-par.ROP, f=clamp(need/dW,0,1);
+      applyDemand(need, t0, f*h, rec);
+      S.t = t0 + f*h;
+      S.out = { arriveT:S.t+par.L, ref:S.cumD, startT:S.t };
+      S.onOrder = par.Q;
+      // with no lead time the truck is already here — take delivery before any more demand
+      // can arrive, otherwise the rest of this slice would be blamed on a zero-length wait
+      if(par.L<=1e-12) receive(rec);
+      consume(h - f*h, rec);
+      return;
+    }
+
+    applyDemand(dW, t0, h, rec);
+    S.t = t0 + h;
+    const ip1=S.inv+S.onOrder;
+    if(!S.out && par.Q>0 && ip1<=par.ROP){          // already at or below when the slice began
+      S.out={ arriveT:S.t+par.L, ref:S.cumD-(par.ROP-ip1), startT:S.t };
+      S.onOrder=par.Q;
+      if(par.L<=1e-12) receive(rec);
+    }
+  }
+
+  function receive(rec){
+    const ltd=S.cumD-S.out.ref;
+    S.ltds.push(ltd);
+    if(S.ltds.length>60000) S.ltds.shift();
+    S.last={ltd, startT:S.out.startT, endT:S.t};
+    if(rec){
+      S.bands.push({a:S.out.startT,b:S.t,ltd});
+      if(S.bands.length>140) S.bands.shift();
+      S.path.push({t:S.t,inv:S.drawInv});
+    }
+    S.inv+=par.Q; S.onOrder=0; S.out=null;
+    S.drawInv+=par.Q;
+    if(rec) S.path.push({t:S.t,inv:S.drawInv});
+  }
+
+  S.advance=function(dt,rec){
+    const target=S.t+dt;
+    let guard=0;
+    while(S.t<target-1e-12 && guard++<300000){
+      let tn=Math.min((Math.floor(S.t/DT+1e-9)+1)*DT, target);
+      if(S.out && S.out.arriveT<tn-1e-12) tn=S.out.arriveT;
+      consume(tn-S.t, rec);
+      S.t=tn;                                   // absorb float drift from the split
+      if(S.out && S.t>=S.out.arriveT-1e-12) receive(rec);
+    }
+    if(rec){
+      const cut=S.t-70;
+      while(S.path.length>2 && S.path[1].t<cut) S.path.shift();
+      while(S.arrivals.length && S.arrivals[0]<cut) S.arrivals.shift();
+      while(S.bands.length && S.bands[0].b<cut) S.bands.shift();
+    }
+  };
+  S.runCycles=function(n){
+    const goal=S.ltds.length+n; let g=0;
+    while(S.ltds.length<goal && g++<300000) S.advance(2,false);
+    S.path=[{t:S.t,inv:S.drawInv}]; S.arrivals=[]; S.bands=[];
+  };
+  return S;
+}
+
+/* ==================== live state ==================== */
+let seed=2026;
+let sim = makeSim(P, seed);
+let playing=false, lastTs=0;
+const SPEEDS=[0.25,0.5,1,2,4,10,40];
+let speed=SPEEDS[2], winW=16;
+
+/* ==================== canvases ==================== */
+const C={};
+function setupCanvas(id){
+  const cv=document.getElementById(id);
+  C[id]={cv, ctx:cv.getContext('2d'), w:0, h:0};
+  return C[id];
+}
+function fit(o){
+  const dpr=window.devicePixelRatio||1;
+  const r=o.cv.getBoundingClientRect();
+  if(!r.width) return;
+  o.w=r.width; o.h=r.height;
+  o.cv.width=Math.round(r.width*dpr); o.cv.height=Math.round(r.height*dpr);
+  o.ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+setupCanvas('footfall'); setupCanvas('chart'); setupCanvas('dist');
+function fitAll(){ fit(C.footfall); fit(C.chart); fit(C.dist); }
+
+let PAL={};
+function readPalette(){
+  const cs=getComputedStyle(document.documentElement);
+  const g=n=>cs.getPropertyValue(n).trim();
+  PAL={ink:g('--ink'), soft:g('--ink-soft'), line:g('--line'), card:g('--card'), card2:g('--card-2'),
+       purple:g('--purple'), purpleLt:g('--purple-lt'), cyan:g('--cyan'), amber:g('--amber'),
+       red:g('--red'), green:g('--green'), cool:g('--cool'), hot:g('--hot')};
+}
+
+function hexToRgb(h){
+  h=h.replace('#','');
+  if(h.length===3) h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
+}
+function mix(c1,c2,f){
+  const a=hexToRgb(c1), b=hexToRgb(c2);
+  return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;
+}
+/* how busy a week was, in bags (projected while the week is still running) */
+function weekLoad(w){
+  const info=sim.weekInfo.get(w);
+  if(!info) return null;
+  const done=clamp(sim.t-w,0,1);
+  if(done>=0.999) return info.D;
+  return done<0.35 ? null : info.D/done;
+}
+/* week colour: cool blue = quiet week, purple = typical, hot orange = busy week */
+function weekColor(w){
+  const D=weekLoad(w);
+  if(D===null || P.sigma<=0) return PAL.purple;
+  const z=clamp((D-P.R)/P.sigma,-2,2);
+  return z<0 ? mix(PAL.purple,PAL.cool,-z/2) : mix(PAL.purple,PAL.hot,z/2);
+}
+
+/* ---- draw a little maths on canvas: segs = [text, kind] with kind 'i'talic, 'u'pright, 's'ub ---- */
+function drawMath(ctx, segs, x, y, size, color, align){
+  const it=`italic 800 ${size}px "Times New Roman",Times,serif`;
+  const up=`800 ${size*0.94}px "Avenir Next",system-ui,sans-serif`;
+  const sb=`800 ${size*0.68}px "Times New Roman",Times,serif`;
+  let w=0;
+  for(const [t,k] of segs){ ctx.font = k==='i'?it:k==='s'?sb:up; w+=ctx.measureText(t).width; }
+  let cx = align==='right' ? x-w : align==='center' ? x-w/2 : x;
+  ctx.textAlign='left';
+  for(const [t,k] of segs){
+    ctx.font = k==='i'?it:k==='s'?sb:up;
+    ctx.fillStyle=color;
+    ctx.fillText(t, cx, k==='s' ? y+size*0.22 : y);
+    cx += ctx.measureText(t).width;
+  }
+  return w;
+}
+
+/* ---- a vertical curly brace, flat ends at x, tip pointing right at x+2w ---- */
+function brace(ctx,x,y0,y1,w,color){
+  const a=Math.min(y0,y1), b=Math.max(y0,y1), ym=(a+b)/2, h=b-a;
+  ctx.strokeStyle=color; ctx.lineWidth=1.6; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  if(h<11){                       // too short to curl — a square bracket reads better
+    ctx.moveTo(x+w,a); ctx.lineTo(x,a); ctx.lineTo(x,b); ctx.lineTo(x+w,b);
+  }else{
+    const q=Math.min(w,h/4);
+    ctx.moveTo(x,a);
+    ctx.quadraticCurveTo(x+w,a, x+w,a+q);
+    ctx.lineTo(x+w,ym-q);
+    ctx.quadraticCurveTo(x+w,ym, x+2*w,ym);
+    ctx.quadraticCurveTo(x+w,ym, x+w,ym+q);
+    ctx.lineTo(x+w,b-q);
+    ctx.quadraticCurveTo(x+w,b, x,b);
+  }
+  ctx.stroke();
+}
+
+/* ==================== chart geometry ==================== */
+function chartGeom(o){
+  const padL=54,padT=10,padB=24;
+  const t1=sim.t+winW*0.05, t0=t1-winW;
+  const yMax=Math.max(20,(P.Q+Math.max(P.ROP,0))*1.06);
+  // The right margin carries the two braces that decompose the ROP into the safety-stock belt
+  // and the demand we expect to burn while waiting, so it has to fit their labels. The footfall
+  // lane shares this geometry, so both stay aligned.
+  const Is=Math.max(0,P.ROP-muL());
+  // …but never let the margin eat the plot on a narrow screen
+  const padR = Math.min(P.L<=0 ? 70 : (Is>=0.5 ? 134 : 112), Math.max(52,o.w*0.3));
+  return {padL,padR,padT,padB,t0,t1,yMax,Is,
+    X:t=>padL+(t-t0)/(t1-t0)*(o.w-padL-padR),
+    Y:v=>o.h-padB-(v/yMax)*(o.h-padT-padB)};
+}
+/* ==================== draw: footfall lane ==================== */
+function drawFootfall(){
+  const o=C.footfall, ctx=o.ctx; if(!o.w) return;
+  ctx.clearRect(0,0,o.w,o.h);
+  const g=chartGeom(C.chart);
+  const {X,t0,t1}=g;
+
+  ctx.fillStyle=PAL.card2;
+  ctx.beginPath(); ctx.roundRect(g.padL,0,Math.max(1,o.w-g.padL-g.padR),o.h,8); ctx.fill();
+
+  // week separators + counts
+  ctx.font='700 10px "Avenir Next",system-ui,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let w=Math.floor(t0); w<=Math.ceil(t1); w++){
+    const x=X(w);
+    if(x>=g.padL-1 && x<=o.w-g.padR+1){
+      ctx.strokeStyle=PAL.line; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,o.h); ctx.stroke();
+    }
+    const info=sim.weekInfo.get(w);
+    const xm=X(w+0.5);
+    if(info && xm>g.padL+10 && xm<o.w-g.padR-10 && winW<=30){
+      ctx.fillStyle=weekColor(w);
+      ctx.fillText(info.n+'', xm, 2);
+    }
+  }
+
+  // one mark per customer
+  const rows=3, baseY=o.h-8;
+  let k=0;
+  for(const t of sim.arrivals){
+    if(t<t0||t>t1) { k++; continue; }
+    const x=X(t), yy=baseY-(k%rows)*10; k++;
+    ctx.fillStyle=weekColor(Math.floor(t));
+    ctx.globalAlpha=.9;
+    ctx.beginPath(); ctx.arc(x,yy-6.5,2,0,6.2832); ctx.fill();      // head
+    ctx.fillRect(x-1.3,yy-4.5,2.6,5.5);                              // body
+    ctx.globalAlpha=1;
+  }
+
+  ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillStyle=PAL.soft; ctx.font='700 10px "Avenir Next",system-ui,sans-serif';
+  ctx.fillText('🚶 customers', 4, o.h/2);
+}
+
+/* ==================== draw: inventory chart ==================== */
+function drawChart(){
+  const o=C.chart, ctx=o.ctx; if(!o.w) return;
+  ctx.clearRect(0,0,o.w,o.h);
+  const g=chartGeom(o), {X,Y,padL,padR,padT,padB,t0,t1,yMax,Is}=g;
+  const plotR=o.w-padR, plotB=o.h-padB;
+  const lr=muL();
+
+  // ---- safety stock: a protecting belt along the floor, rarely dipped into ----
+  if(P.L>0 && Is>=0.5){
+    ctx.fillStyle=PAL.amber; ctx.globalAlpha=.20;
+    ctx.fillRect(padL,Y(Is),plotR-padL,Y(0)-Y(Is));
+    ctx.globalAlpha=1;
+  }
+
+  // ---- lead-time bands ----
+  for(const b of sim.bands){
+    const xa=Math.max(padL,X(b.a)), xb=Math.min(plotR,X(b.b));
+    if(xb<=padL||xa>=plotR) continue;
+    const so=b.ltd>P.ROP+1e-6;
+    ctx.fillStyle=so?PAL.red:PAL.cyan; ctx.globalAlpha=.10;
+    ctx.fillRect(xa,padT,xb-xa,plotB-padT);
+    ctx.globalAlpha=1;
+  }
+  if(sim.out){ // band in progress
+    const xa=Math.max(padL,X(sim.out.startT)), xb=Math.min(plotR,X(sim.t));
+    if(xb>xa){ ctx.fillStyle=PAL.amber; ctx.globalAlpha=.14; ctx.fillRect(xa,padT,xb-xa,plotB-padT); ctx.globalAlpha=1; }
+  }
+
+  // ---- gridlines ----
+  const step=Math.max(10,Math.round(yMax/5/10)*10);
+  ctx.strokeStyle=PAL.line; ctx.lineWidth=1;
+  ctx.fillStyle=PAL.soft; ctx.font='600 10.5px system-ui,sans-serif';
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let v=0;v<=yMax;v+=step){
+    const y=Y(v);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(plotR,y); ctx.stroke();
+    ctx.fillText(Math.round(v)+'',padL-7,y);
+  }
+  // week axis
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  const wStep=Math.max(1,Math.round(winW/9));
+  for(let w=Math.ceil(t0);w<=t1;w++){
+    if(w%wStep) continue;
+    const x=X(w); if(x<padL||x>plotR) continue;
+    ctx.beginPath(); ctx.moveTo(x,plotB); ctx.lineTo(x,plotB+3); ctx.stroke();
+    ctx.fillText(w+'',x,plotB+5);
+  }
+  ctx.textAlign='right'; ctx.fillStyle=PAL.soft;   // left margin: the right one holds the braces
+  ctx.font='700 10px "Avenir Next",system-ui,sans-serif';
+  ctx.fillText('week',padL-7,plotB+5);
+
+  // ---- zero line ----
+  ctx.strokeStyle=PAL.red; ctx.lineWidth=1.5; ctx.globalAlpha=.6;
+  ctx.beginPath(); ctx.moveTo(padL,Y(0)); ctx.lineTo(plotR,Y(0)); ctx.stroke();
+  ctx.globalAlpha=1;
+
+  // ---- inventory staircase, coloured by how busy the week was ----
+  ctx.lineWidth=2.2; ctx.lineJoin='round'; ctx.lineCap='round';
+  const pts=sim.path;
+  ctx.save(); ctx.beginPath(); ctx.rect(padL,padT-2,plotR-padL,plotB-padT+4); ctx.clip();
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1], b=pts[i];
+    if(b.t<t0||a.t>t1) continue;
+    ctx.strokeStyle=weekColor(Math.floor((a.t+b.t)/2));
+    ctx.beginPath(); ctx.moveTo(X(a.t),Y(a.inv)); ctx.lineTo(X(b.t),Y(b.inv)); ctx.stroke();
+  }
+  ctx.restore();
+
+  // ---- ROP + L·R reference lines ----
+  // all right-margin labels share one left edge, clear of the braces
+  const braceX=plotR+7, braceW=5, labelX = P.L>0 ? braceX+2*braceW+7 : plotR+6;
+
+  function refLine(v,color,segs,dash,dy){
+    const y=Y(v); if(y<padT-2||y>plotB+2) return;
+    ctx.strokeStyle=color; ctx.lineWidth=1.8; ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(plotR,y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.textBaseline='middle';
+    drawMath(ctx,segs,labelX,y+(dy||0),11.5,color,'left');
+  }
+  // top edge of the belt
+  if(P.L>0 && Is>=0.5) refLine(Is,PAL.amber,[],[4,3]);
+  refLine(P.ROP,PAL.purple,[['ROP','i'],[' = '+fmt(P.ROP,0),'u']],[6,4]);
+
+  // ---- braces: the ROP is the belt plus the demand we expect to burn while waiting ----
+  if(P.L>0){
+    const xb=braceX, w=braceW, lx=labelX;
+    ctx.textBaseline='middle';
+    // what we expect to consume during the lead time, sitting on top of the belt
+    brace(ctx,xb,Y(P.ROP),Y(Is),w,PAL.soft);
+    drawMath(ctx,[['L','i'],['·','u'],['R','i'],[' = '+fmt(lr,0),'u']],
+             lx,(Y(P.ROP)+Y(Is))/2,11.5,PAL.soft,'left');
+    if(Is>=0.5){
+      brace(ctx,xb,Y(Is),Y(0),w,PAL.amber);
+      drawMath(ctx,[['safety stock','u'],[' = '+fmt(Is,0),'u']],
+               lx,(Y(Is)+Y(0))/2,11.5,PAL.amber,'left');
+    }
+  }
+
+  // ---- annotate the most recent completed lead time ----
+  const b=sim.bands[sim.bands.length-1];
+  if(b && X(b.b)>padL+30){
+    const so=b.ltd>P.ROP+1e-6;
+    const col=so?PAL.red:PAL.cyan;
+    const xa=Math.max(padL,X(b.a)), xb=Math.min(plotR,X(b.b));
+    ctx.strokeStyle=col; ctx.lineWidth=1.6; ctx.setLineDash([4,3]);
+    ctx.strokeRect(xa,padT,xb-xa,plotB-padT); ctx.setLineDash([]);
+    // vertical measure of the drop
+    const xm=xb-6, yTop=Y(P.ROP), yBot=Y(Math.max(0,P.ROP-b.ltd));
+    ctx.strokeStyle=col; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(xm,yTop); ctx.lineTo(xm,yBot); ctx.stroke();
+    for(const [yy,dir] of [[yTop,1],[yBot,-1]]){
+      ctx.beginPath(); ctx.moveTo(xm-3.5,yy+4*dir); ctx.lineTo(xm,yy); ctx.lineTo(xm+3.5,yy+4*dir); ctx.stroke();
+    }
+    ctx.fillStyle=col; ctx.font='800 11px "Avenir Next",system-ui,sans-serif';
+    ctx.textAlign='right'; ctx.textBaseline='bottom';
+    const lab=(so?'⚠ ':'')+'demand in lead time = '+fmt(b.ltd,1);
+    ctx.fillText(lab,xm-6,Math.min(yBot,plotB-4));
+  }
+
+  // ---- "now" cursor ----
+  const xn=X(sim.t);
+  if(xn>padL&&xn<plotR){
+    ctx.strokeStyle=PAL.purpleLt; ctx.lineWidth=1; ctx.globalAlpha=.7;
+    ctx.beginPath(); ctx.moveTo(xn,padT); ctx.lineTo(xn,plotB); ctx.stroke();
+    ctx.globalAlpha=1;
+    ctx.fillStyle=PAL.purple; ctx.beginPath(); ctx.arc(xn,Y(sim.drawInv),3.5,0,6.2832); ctx.fill();
+  }
+
+  // ---- axis title ----
+  ctx.save(); ctx.translate(13,(padT+plotB)/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle=PAL.soft; ctx.font='700 10.5px "Avenir Next",system-ui,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('bags in stock',0,0); ctx.restore();
+}
+
+/* ==================== draw: lead-time demand distribution ==================== */
+function drawDist(){
+  const o=C.dist, ctx=o.ctx; if(!o.w) return;
+  ctx.clearRect(0,0,o.w,o.h);
+  const padL=16,padR=16,padT=54,padB=36;
+  const m=muL(), s=sigL();
+  const spread = s>0 ? 4.2*s : Math.max(2,m*0.25+1);
+  let lo=m-spread, hi=m+spread;
+  lo=Math.min(lo,P.ROP-0.08*(hi-lo)); hi=Math.max(hi,P.ROP+0.08*(hi-lo));
+  const X=v=>padL+(v-lo)/(hi-lo)*(o.w-padL-padR);
+  const plotB=o.h-padB;
+
+  // histogram of realised lead-time demands
+  const NB=46, bw=(hi-lo)/NB, bins=new Float64Array(NB);
+  const n=sim.ltds.length;
+  for(let i=0;i<n;i++){
+    const k=Math.floor((sim.ltds[i]-lo)/bw);
+    if(k>=0&&k<NB) bins[k]++;
+  }
+  let hMax=0;
+  for(let k=0;k<NB;k++){ bins[k]=n?bins[k]/(n*bw):0; if(bins[k]>hMax) hMax=bins[k]; }
+  const cMax = s>0 ? normPdf(0)/s : 0;
+  const yMax = Math.max(hMax,cMax)*1.18 || 1;
+  const Y=d=>plotB-(d/yMax)*(plotB-padT);
+
+  // shaded areas under the theoretical curve
+  if(s>0){
+    for(const seg of [{a:lo,b:Math.min(P.ROP,hi),c:PAL.cyan,al:.22},
+                      {a:Math.max(P.ROP,lo),b:hi,c:PAL.red,al:.20}]){
+      if(seg.b<=seg.a) continue;
+      ctx.beginPath(); ctx.moveTo(X(seg.a),plotB);
+      for(let x=seg.a;x<=seg.b;x+=(hi-lo)/300) ctx.lineTo(X(x),Y(normPdf((x-m)/s)/s));
+      ctx.lineTo(X(seg.b),plotB); ctx.closePath();
+      ctx.fillStyle=seg.c; ctx.globalAlpha=seg.al; ctx.fill(); ctx.globalAlpha=1;
+    }
+  }
+
+  // histogram bars
+  for(let k=0;k<NB;k++){
+    if(bins[k]<=0) continue;
+    const x0=X(lo+k*bw), x1=X(lo+(k+1)*bw);
+    const so=(lo+k*bw)>=P.ROP;      // only bars entirely past the ROP count as stock-outs
+    ctx.fillStyle=so?PAL.red:PAL.amber; ctx.globalAlpha=.55;
+    ctx.fillRect(x0+0.5,Y(bins[k]),Math.max(1,x1-x0-1),plotB-Y(bins[k]));
+    ctx.globalAlpha=1;
+  }
+
+  // the "common mistake" ghost curve
+  if(document.getElementById('chkMistake').checked && P.sigma>0 && P.L>0){
+    const sw=P.sigma*P.L;
+    ctx.strokeStyle=PAL.soft; ctx.lineWidth=1.6; ctx.setLineDash([5,4]); ctx.globalAlpha=.75;
+    ctx.beginPath();
+    for(let x=lo;x<=hi;x+=(hi-lo)/300){
+      const d=normPdf((x-m)/sw)/sw, xx=X(x), yy=Y(d);
+      x===lo?ctx.moveTo(xx,yy):ctx.lineTo(xx,yy);
+    }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+    ctx.textBaseline='top';
+    drawMath(ctx,[['σ','i'],['R','s'],[' × ','u'],['L','i'],['  (too wide)','u']],
+             X(m)+6, Y(normPdf(0)/sw)-13, 11, PAL.soft, 'left');
+  }
+
+  // theoretical curve
+  if(s>0){
+    ctx.strokeStyle=PAL.purple; ctx.lineWidth=2.4;
+    ctx.beginPath();
+    for(let x=lo;x<=hi;x+=(hi-lo)/400){
+      const xx=X(x), yy=Y(normPdf((x-m)/s)/s);
+      x===lo?ctx.moveTo(xx,yy):ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+  }else{
+    ctx.strokeStyle=PAL.purple; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(X(m),plotB); ctx.lineTo(X(m),padT+10); ctx.stroke();
+  }
+
+  // axis
+  ctx.strokeStyle=PAL.line; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(padL,plotB); ctx.lineTo(o.w-padR,plotB); ctx.stroke();
+  ctx.fillStyle=PAL.soft; ctx.font='600 10.5px system-ui,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  const axStep=Math.max(5,Math.round((hi-lo)/6/5)*5);
+  for(let v=Math.ceil(lo/axStep)*axStep; v<=hi; v+=axStep){
+    const x=X(v); ctx.beginPath(); ctx.moveTo(x,plotB); ctx.lineTo(x,plotB+3); ctx.stroke();
+    ctx.fillText(Math.round(v)+'',x,plotB+5);
+  }
+  ctx.fillText('bags demanded during the lead time',(padL+o.w-padR)/2,plotB+18);
+
+  // vertical markers — labels sit on their own rows so they can never collide
+  function vline(v,color,segs,rowY){
+    const x=X(v); if(x<padL-4||x>o.w-padR+4) return;
+    ctx.strokeStyle=color; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(x,plotB); ctx.lineTo(x,rowY+11); ctx.stroke(); ctx.setLineDash([]);
+    ctx.textBaseline='top';
+    const right = x>o.w*0.7;
+    drawMath(ctx,segs, x + (right?-5:5), rowY, 11.5, color, right?'right':'left');
+  }
+  if(P.L>0) vline(m,PAL.soft,[['L','i'],['·','u'],['R','i'],[' = '+fmt(m,0),'u']],padT-46);
+  vline(P.ROP,PAL.purple,[['ROP','i'],[' = '+fmt(P.ROP,0),'u']],padT-32);
+
+  // safety-stock arrow, on its own row underneath both labels
+  if(P.ROP>m+0.4 && s>0){
+    const y=padT-4, xa=X(m), xb=X(P.ROP);
+    ctx.strokeStyle=PAL.amber; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(xa,y); ctx.lineTo(xb,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xb-4,y-3.5); ctx.lineTo(xb,y); ctx.lineTo(xb-4,y+3.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xa,y-4); ctx.lineTo(xa,y+4); ctx.stroke();
+    ctx.textBaseline='bottom';
+    drawMath(ctx,[['I','i'],['s','s'],[' = '+fmt(P.ROP-m,1),'u']],(xa+xb)/2,y-3,11,PAL.amber,'center');
+  }
+
+  // "no stock-out" / "stock-out" captions
+  ctx.font='800 10px "Avenir Next",system-ui,sans-serif'; ctx.textBaseline='bottom';
+  if(s>0){
+    ctx.fillStyle=PAL.cyan; ctx.textAlign='center';
+    const xc=(padL+Math.min(X(P.ROP),o.w-padR))/2;
+    if(X(P.ROP)>padL+50) ctx.fillText('no stock-out',xc,plotB-4);
+    if(X(P.ROP)<o.w-padR-50){
+      ctx.fillStyle=PAL.red;
+      ctx.fillText('stock-out',(Math.max(X(P.ROP),padL)+o.w-padR)/2,plotB-4);
+    }
+  }
+}
+
+/* ==================== stats ==================== */
+function stats(){
+  const n=sim.ltds.length;
+  let so=0, esc=0;
+  for(let i=0;i<n;i++){
+    const x=sim.ltds[i];
+    if(x>P.ROP+1e-6){ so++; esc+=x-P.ROP; }
+  }
+  const m=muL(), s=sigL();
+  let escTh;
+  if(s>0){ const z=(P.ROP-m)/s; escTh=s*(normPdf(z)-z*(1-normCdf(z))); }
+  else escTh=Math.max(0,m-P.ROP);
+  return {n, so, cslE:n?1-so/n:NaN, cslT:cslTh(),
+          fillE:n?1-(esc/n)/P.Q:NaN, fillT:1-escTh/P.Q};
+}
+
+/* ==================== DOM refresh ==================== */
+const $=id=>document.getElementById(id);
+let lastWeekShown=-1;
+
+function refreshStore(){
+  const w=sim.curWeek, c=sim.curCount;
+  $('wkNum').textContent = w<0?0:w;
+  $('wkCount').textContent = c;
+  const D=weekLoad(w);
+  const tag=$('wkTag');
+  if(D!==null && P.sigma>0){
+    const z=(D-P.R)/P.sigma;
+    tag.className='tag '+(z>0.7?'busy':z<-0.7?'slow':'norm');
+    tag.textContent = z>0.7?'busy week':z<-0.7?'quiet week':'typical';
+  }else{ tag.className='tag norm'; tag.textContent=P.sigma>0?'…':'steady'; }
+
+  const box=$('people');
+  if(speed<=4){
+    if(box.childElementCount!==c || lastWeekShown!==w){
+      if(lastWeekShown!==w || box.childElementCount>c){ box.innerHTML=''; }
+      const col=weekColor(w);
+      for(let i=box.childElementCount;i<Math.min(c,34);i++){
+        const d=document.createElement('div'); d.className='p'; d.style.background=col; box.appendChild(d);
+      }
+      lastWeekShown=w;
+    }
+  }else if(box.childElementCount){ box.innerHTML=''; lastWeekShown=-1; }
+}
+
+function refreshNumbers(){
+  const st=stats(), m=muL(), s=sigL();
+  $('stCycles').textContent=st.n;
+  $('stSO').textContent=st.so;
+  $('stSOs').textContent=st.n?fmt(100*st.so/st.n,1)+'% of cycles':'—';
+  $('stCSLe').textContent=st.n?pct(st.cslE,1):'—';
+  // a simulated percentage is an estimate — show how much of the gap is just sampling noise
+  $('stCSLeS').textContent = st.n>1
+    ? '±'+(196*Math.sqrt(Math.max(st.cslE*(1-st.cslE),1e-9)/st.n)).toFixed(1)+' pts · run more cycles'
+    : 'what happened';
+  $('stCSLt').textContent=pct(st.cslT,1);
+  $('stFill').textContent=pct(st.fillT,2);
+  $('stSS').textContent=fmt(P.ROP-m,1);
+
+  $('rAnn').textContent='= '+fmt(P.R*WEEKS_PER_YEAR,0)+'/yr';
+  $('eoqHint').innerHTML = MQ+' = '+RAD('2'+MS+MR+'/'+MH)+' = '+fmt(eoq(),2)+' bags';
+  $('sigmaHint').innerHTML = P.sigma<=0 ? 'no randomness — the textbook sawtooth'
+    : M('σ<sub>L</sub> = σ<sub>R</sub>'+RADr('L'))+' = '+fmt(s,2)+' during the lead time';
+  $('lHint').innerHTML = P.L<=0 ? 'no lead time — the truck is instant'
+    : 'weeks · '+M('L·R')+' = '+fmt(m,1)+' bags demanded while we wait';
+  $('ropHint').innerHTML =
+    P.L<=0 ? M('ROP = 0')+' — the truck is instant, so we order as we run out'
+    : s>0  ? M('ROP = L·R + I<sub>s</sub>')+' = '+fmt(m,1)+' + '+fmt(Math.max(0,P.ROP-m),1)+
+             ' = '+fmt(P.ROP,1)+' bags'
+    :        M('ROP = L·R')+' = '+fmt(m,1)+' bags — no randomness, so no safety stock';
+
+  $('formulaBox').innerHTML =
+    '<span class="lbl">Service level of this policy</span>'+
+    M('CSL')+' = '+U('NORM.DIST')+'(<b>'+fmt(P.ROP,0)+'</b>, '+M('L·R')+'=<b>'+fmt(m,1)+'</b>, '+
+      M('σ<sub>R</sub>'+RADr('L'))+'=<b>'+fmt(s,2)+'</b>, 1) = <span class="res">'+pct(st.cslT,2)+'</span>'+
+    '<br><span class="lbl" style="margin-top:6px">Reorder point for the target service level</span>'+
+    M('ROP = L·R + σ<sub>R</sub>'+RADr('L')+'·'+U('NORM.S.INV')+'('+U('CSL')+')')+' = '+
+      fmt(m,1)+' + '+fmt(s,2)+'×'+fmt(normInv(P.csl),3)+' = <span class="res">'+
+      fmt(m+s*normInv(P.csl),2)+'</span>';
+
+  drawCost();
+}
+
+/* ---- small maths-typesetting helpers (LaTeX-ish, no external library) ---- */
+const M   = s=>'<span class="m">'+s+'</span>';
+const U   = s=>'<span class="u">'+s+'</span>';
+const RADr= s=>'<span class="rad">√<span>'+s+'</span></span>';       // inside an .m span
+const RAD = s=>M(RADr(s));                                           // standalone
+const QE='Q<sub><span class="u">EOQ</span></sub>';                   // inner markup, for use inside M(…)
+const MR='<span class="m">R</span>', MS='<span class="m">S</span>',
+      MH='<span class="m">H</span>', MQ=M(QE);
+
+function drawCost(){
+  const Rann=P.R*WEEKS_PER_YEAR;
+  const Lon=memo.L, Son=memo.sigma;                 // the "switched on" values
+  const z=normInv(P.csl);
+
+  // the three columns of the financial tree, always shown in full
+  const cols=[
+    {L:0,   sg:0,   hd:'Ideal',          sub:'no lead time, no randomness'},
+    {L:Lon, sg:0,   hd:'+ Lead time',    sub:M('L')+' = '+fmt(Lon,1)+' wk'},
+    {L:Lon, sg:Son, hd:'+ Variability',  sub:M('σ<sub>R</sub>')+' = '+fmt(Son,2)+' bags/wk'}
+  ].map(c=>{
+    const mu=c.L*P.R, sl=c.sg*Math.sqrt(c.L), ss=Math.max(0,sl*z);
+    return {...c, mu, ss, rop:mu+ss,
+            ship:P.S*Rann/P.Q, holdC:P.H*P.Q/2, holdS:P.H*ss,
+            avgI:P.Q/2+ss};
+  });
+  cols.forEach(c=>{ c.total=c.ship+c.holdC+c.holdS; });
+
+  // which column are we currently sitting in?
+  const here = (P.L<=0) ? 0 : (P.sigma<=0 ? 1 : 2);
+
+  const rows=[
+    {lbl:'Order size',        f:MQ+' = '+RAD('2'+MS+MR+'/'+MH),                        v:c=>fmt(P.Q,2)},
+    {lbl:'Reorder point',     f:M('ROP = L·R + I<sub>s</sub>'),                        v:c=>fmt(c.rop,1)},
+    {lbl:'Safety stock',      f:M('I<sub>s</sub> = σ<sub>R</sub>'+RADr('L')+'·'+U('NORM.S.INV')+'('+U('CSL')+')'), v:c=>fmt(c.ss,1)},
+    {lbl:'Average inventory', f:M(QE+'/2 + I<sub>s</sub>'),                            v:c=>fmt(c.avgI,1)},
+    {lbl:'Annual ordering cost', f:M('S·R/'+QE),                                       v:c=>money(c.ship)},
+    {lbl:'Annual holding cost',  f:M('H·('+QE+'/2 + I<sub>s</sub>)'),                  v:c=>money(c.holdC+c.holdS)}
+  ];
+
+  let html='<thead><tr><th>Per store</th><th class="formula">Formula</th>';
+  cols.forEach((c,i)=>{
+    html+='<th class="'+(i===here?'here':'')+'">'+c.hd+'<span class="sub">'+c.sub+'</span>'+
+          (i===here?'<span class="youare">▲ you are here</span>':'')+'</th>';
+  });
+  html+='</tr></thead><tbody>';
+  for(const r of rows){
+    html+='<tr><td class="rowlbl">'+r.lbl+'</td><td class="formula">'+r.f+'</td>';
+    cols.forEach((c,i)=>{ html+='<td class="'+(i===here?'here':'')+'">'+r.v(c)+'</td>'; });
+    html+='</tr>';
+  }
+  html+='<tr class="total"><td>Total annual cost</td><td class="formula">'+
+        M('S·R/'+QE+' + H·('+QE+'/2 + I<sub>s</sub>)')+'</td>';
+  cols.forEach((c,i)=>{
+    const worse=c.total>cols[0].total+0.5;
+    html+='<td class="'+(i===here?'here ':'')+(worse?'chg':'')+'">'+money(c.total)+'</td>';
+  });
+  html+='</tr></tbody>';
+  $('costTable').innerHTML=html;
+}
+
+/* ==================== animation loop ==================== */
+function frame(ts){
+  if(!lastTs) lastTs=ts;
+  const dt=Math.min(0.15,(ts-lastTs)/1000);
+  lastTs=ts;
+  if(playing){ sim.advance(dt*speed,true); refreshStore(); }
+  drawFootfall(); drawChart(); drawDist();
+  requestAnimationFrame(frame);
+}
+
+/* ==================== controls ==================== */
+function rebuild(keepStats){
+  const t=sim?sim.t:0;
+  const old=sim;
+  sim=makeSim(P,seed);
+  if(keepStats&&old) sim.ltds=old.ltds;
+  lastWeekShown=-1; $('people').innerHTML='';
+  refreshNumbers();
+}
+function softUpdate(){ refreshNumbers(); }   // Q / ROP change: keep history
+
+function bindNum(id,key,onChange){
+  const el=$(id);
+  el.value=P[key];
+  el.addEventListener('input',()=>{
+    const v=parseFloat(el.value);
+    if(!isFinite(v)) return;
+    P[key]=v; onChange(); syncUI(); syncURL();
+  });
+}
+function bindPair(numId,rgId,key,onChange){
+  const a=$(numId), b=$(rgId);
+  const set=v=>{ P[key]=v; a.value=v; b.value=v; onChange(); syncUI(); syncURL(); };
+  a.addEventListener('input',()=>{const v=parseFloat(a.value); if(isFinite(v)) set(v);});
+  b.addEventListener('input',()=>set(parseFloat(b.value)));
+}
+
+function syncUI(){
+  $('inR').value=P.R; $('inS').value=P.S; $('inH').value=P.H;
+  $('inSigma').value=P.sigma; $('rgSigma').value=P.sigma;
+  $('inL').value=P.L; $('rgL').value=P.L;
+  $('inQ').value=Math.round(P.Q*100)/100;
+  const rgR=$('rgROP');
+  rgR.max=Math.max(20,Math.ceil(muL()+4.5*Math.max(sigL(),1)+5));
+  rgR.value=P.ROP; $('inROP').value=Math.round(P.ROP*100)/100;
+
+  // the CSL box only means something when demand is actually random
+  const live=sigL()>0;
+  const cs=$('inCSL');
+  cs.disabled=!live;
+  cs.value = live ? Math.round(cslTh()*1000)/10 : '';
+  cs.placeholder = live ? '' : 'n/a';
+
+  $('swL').classList.toggle('on',P.L>0);
+  $('swS').classList.toggle('on',P.sigma>0);
+  $('swL').querySelector('.st').textContent = P.L>0?'ON':'OFF';
+  $('swS').querySelector('.st').textContent = P.sigma>0?'ON':'OFF';
+  $('fsL').classList.toggle('off',P.L<=0);
+  $('fsSigma').classList.toggle('off',P.sigma<=0);
+
+  refreshNumbers();
+}
+function syncURL(){
+  const q=new URLSearchParams({R:P.R,sd:P.sigma,L:P.L,S:P.S,H:P.H,
+    Q:Math.round(P.Q*100)/100,ROP:Math.round(P.ROP*100)/100,csl:P.csl});
+  history.replaceState(null,'','?'+q.toString());
+}
+function loadURL(){
+  const q=new URLSearchParams(location.search);
+  const g=(k,d)=>{const v=parseFloat(q.get(k)); return isFinite(v)?v:d;};
+  P.R=g('R',P.R); P.sigma=g('sd',P.sigma); P.L=g('L',P.L);
+  P.S=g('S',P.S); P.H=g('H',P.H); P.Q=g('Q',P.Q); P.ROP=g('ROP',P.ROP);
+  if(P.L>0) memo.L=P.L;
+  if(P.sigma>0) memo.sigma=P.sigma;
+  // ROP and CSL are two views of one decision — start them agreeing, so flipping a
+  // switch off and back on returns to exactly the ROP we started from
+  if(q.has('csl')){ P.csl=clamp(g('csl',P.csl),0.001,0.999); P.ROP=ropFromCSL(); }
+  else if(sigL()>0){ P.csl=clamp(cslTh(),0.001,0.999); }
+}
+
+/* ---- the two switches: each one adds a complication from the lecture ---- */
+function setLead(on){
+  if(on){ P.L = memo.L>0?memo.L:2; } else { if(P.L>0) memo.L=P.L; P.L=0; }
+  P.ROP = ropFromCSL();
+  rebuild(false); syncUI(); syncURL();
+}
+function setRandom(on){
+  if(on){ P.sigma = memo.sigma>0?memo.sigma:6.25; } else { if(P.sigma>0) memo.sigma=P.sigma; P.sigma=0; }
+  P.ROP = ropFromCSL();
+  rebuild(false); syncUI(); syncURL();
+}
+/* ROP implied by the current service-level target (covers all four switch combinations) */
+function ropFromCSL(){
+  const s=sigL();
+  return Math.max(0, muL() + (s>0 ? s*normInv(P.csl) : 0));
+}
+
+/* ==================== wiring ==================== */
+function init(){
+  loadURL();
+  readPalette(); fitAll();
+
+  bindNum('inR','R',()=>{P.Q=eoq();P.ROP=ropFromCSL();rebuild(false)});
+  bindNum('inS','S',()=>{P.Q=eoq();softUpdate()});
+  bindNum('inH','H',()=>{P.Q=eoq();softUpdate()});
+  bindPair('inSigma','rgSigma','sigma',()=>{
+    if(P.sigma>0) memo.sigma=P.sigma;
+    P.ROP=ropFromCSL(); rebuild(false);
+  });
+  bindPair('inL','rgL','L',()=>{
+    if(P.L>0) memo.L=P.L;
+    P.ROP=ropFromCSL(); rebuild(false);
+  });
+  bindNum('inQ','Q',softUpdate);
+
+  // Policy — when to order: ROP and CSL are two views of the same decision
+  const setROP=v=>{
+    P.ROP=Math.max(0,v);
+    if(sigL()>0) P.csl=clamp(cslTh(),0.001,0.999);   // the other box follows
+    softUpdate(); syncUI(); syncURL();
+  };
+  $('inROP').addEventListener('input',e=>{const v=parseFloat(e.target.value); if(isFinite(v)) setROP(v);});
+  $('rgROP').addEventListener('input',e=>setROP(parseFloat(e.target.value)));
+  $('inCSL').addEventListener('input',e=>{
+    const v=parseFloat(e.target.value);
+    if(!isFinite(v)||sigL()<=0) return;
+    P.csl=clamp(v/100,0.001,0.999);
+    P.ROP=ropFromCSL();
+    softUpdate(); syncUI(); syncURL();
+  });
+
+  $('btnEOQ').onclick=()=>{P.Q=Math.round(eoq()*100)/100;syncUI();syncURL()};
+  $('swL').onclick=()=>setLead(P.L<=0);
+  $('swS').onclick=()=>setRandom(P.sigma<=0);
+  $('chkMistake').onchange=()=>{};
+
+  $('btnPlay').onclick=e=>{
+    playing=!playing; lastTs=0;
+    e.target.textContent = playing?'⏸ Pause':'▶︎ Play';
+  };
+  $('btnReset').onclick=()=>{ seed=(Math.random()*1e9)|0; rebuild(false); };
+  $('btnBatch').onclick=e=>{
+    e.target.textContent='… running';
+    setTimeout(()=>{ sim.runCycles(300); refreshNumbers(); e.target.textContent='⏭ Run 300 cycles'; },20);
+  };
+  $('rgSpeed').oninput=e=>{ speed=SPEEDS[+e.target.value]; $('spdLbl').textContent=speed+' wk/s'; };
+  $('rgWin').oninput=e=>{ winW=+e.target.value; $('winLbl').textContent=winW+' wk'; };
+
+  $('themeBtn').onclick=()=>{
+    const dark=document.documentElement.getAttribute('data-theme')==='dark';
+    document.documentElement.setAttribute('data-theme',dark?'light':'dark');
+    $('themeBtn').textContent=dark?'🌙':'☀️';
+    readPalette();
+  };
+  window.addEventListener('resize',()=>{fitAll()});
+
+  $('spdLbl').textContent=speed+' wk/s';
+  $('winLbl').textContent=winW+' wk';
+  syncUI();
+  sim.runCycles(0);
+  requestAnimationFrame(frame);
+}
+init();
+</script>
+</body>
+</html>
