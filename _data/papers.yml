@@ -114,12 +114,11 @@
       url: "https://sites.google.com/view/prakirtjhunjhunwala"
     - name: "Siva Theja Maguluri"
       url: "https://sites.google.com/site/sivatheja/"
-  url: "https://arxiv.org/abs/2607.22618"
+  url: "https://pubsonline.informs.org/doi/abs/10.1287/educ.2026.0305"
   venue: "Tutorials in Operations Research (2026 INFORMS TutORials)"
   year: 2026
   date: "2026-11-01"
   section: published
-  note: "upcoming"
   abstract:
     - >-
       Modern service systems—ranging from cloud data centers and ride-hailing
