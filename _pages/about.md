@@ -14,6 +14,8 @@ You can also find me on my <a href="https://www.kellogg.northwestern.edu/academi
 
 ## News and highlights
 
+- Our family recently grew by one! I am on maternity leave, so please expect delays in my replies.
+
 - With my coauthors <a href="https://sites.google.com/view/sushil-varma/home" target="_blank" rel="noopener">Sushil Mahavir Varma</a>, <a href="https://sites.google.com/view/prakirtjhunjhunwala" target="_blank" rel="noopener">Prakirt Jhunjhunwala</a>, and <a href="https://sites.google.com/site/sivatheja/" target="_blank" rel="noopener">Siva Theja Maguluri</a>, our tutorial "Transform Method for Stochastic Processing and Matching Networks" was accepted for the 2026 INFORMS TutORials in Operations Research. The companion paper is now available in the <a href="https://pubsonline.informs.org/doi/abs/10.1287/educ.2026.0305" target="_blank" rel="noopener"><i>Tutorials in Operations Research</i></a> series.
 
 - I am part of the <a href="https://connect.informs.org/aps/about-us/council" target="_blank" rel="noopener">APS council</a> this year with <a href="https://mitsloan.mit.edu/faculty/directory/daniel-freund" target="_blank" rel="noopener">Daniel Freund</a>. We will be organizing the APS cluster at INFORMS 2026.
