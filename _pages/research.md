@@ -60,6 +60,8 @@ My research is at the intersection of applied probability and optimization. Spec
           <li>{{ v.status }} <a href="{{ v.url }}" target="_blank" rel="noopener">here</a>.</li>
         {% endfor %}
         </ul>
+      {% elsif p.status_lines %}
+        {% for line in p.status_lines %}<p>{{ line }}</p>{% endfor %}
       {% else %}
         {% assign p_url = p.url %}
         {% unless p_url contains '://' %}{% assign p_url = p_url | prepend: site.baseurl %}{% endunless %}

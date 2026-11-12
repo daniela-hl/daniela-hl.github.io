@@ -33,7 +33,8 @@
   coauthors:
     - name: "Izzy Grosof"
       url: "https://isaacg1.github.io/"
-  url: "/files/sek-improves.pdf"
+  url: "https://arxiv.org/abs/2510.25963"
+  conference_url: "https://dl.acm.org/doi/abs/10.1145/3801489.3806892"
   date: "2025-11-01"
   section: under_review
   abstract:
@@ -55,6 +56,14 @@
       variant of SEK-SMOD) and empirically verify the improvement over SRPT-k
       via simulation.
   status_text: "Accepted for ACM Sigmetrics 2026; Journal version under review."
+  status_lines:
+    - >-
+      Accepted for ACM Sigmetrics 2026 (conference version available
+      <a href="https://dl.acm.org/doi/abs/10.1145/3801489.3806892" target="_blank" rel="noopener">here</a>).
+    - "Second prize in the 2026 INFORMS JFIG Paper Competition."
+    - >-
+      Journal version under review. The journal manuscript is available
+      <a href="https://arxiv.org/abs/2510.25963" target="_blank" rel="noopener">here</a>.
 
 - id: expo_tail_bounds
   title: "Exponential Tail Bounds on Queues: A Confluence of Non-Asymptotic Heavy-Traffic and Large Deviations"
